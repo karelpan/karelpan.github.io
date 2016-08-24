@@ -9,7 +9,7 @@ title: Java使用org.apache.commons.lang3.time.DateUtils求时间片计数
 <p class="meta">24 August 2016 - Su Zhou</p>
 
 - 求时间片样例，比如：求出一份数据中，一年内小区车辆出入的时间点分布(以小时来制作分布图，以天为分布采样基准)，进和出分别算一次记录
-<pre><code>
+```java
 List<Date> dateMarkLsit = getDateMarkListFromYear("2015");
 int[] hourFlagmentCounts = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 for(Date date : dateMarkList) {
@@ -20,7 +20,7 @@ for(Date date : dateMarkList) {
 
 // 将数据进行渲染
 renderToChartUI(hourFlagmentCounts);
-</code></pre>
+```
 注意： DateUtils 并不支持所有的Calendar-Fragemnt， 想知道支持的信息， 可查看对应版本的 DateUtils
 源码中方法getFragment(Calendar calendar, int fragment, int unit)的实现，可和Java核心库的Calendar类对比查看。
         
