@@ -11,11 +11,12 @@ title: Java使用org.apache.commons.lang3.time.DateUtils求时间片计数
 - 求时间片样例，比如：求出一份数据中，一年内小区车辆出入的时间点分布(以小时来制作分布图，以天为分布采样基准)，进和出分别算一次记录
 
 ```java
-List<Date> dateMarkLsit = getDateMarkListFromYear("2015");
+List<String> dateMarkLsit = getDateMarkListFromYear("2015");
 int[] hourFlagmentCounts = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-for(Date date : dateMarkList) {
+for(String dateStr : dateMarkList) {
+    Date date = DateTimeUtil.parseDate(dateStr, "yyyy-MM-dd HH:mm:ss.SSS")
     // range from 0 to 23 -> [0,23]
-    long hourFragment = DateUtils.getFragmentInHours(DateTimeUtil.parseDate(date, "yyyy-MM-dd HH:mm:ss.SSS"), Calendar.DATE);
+    long hourFragment = DateUtils.getFragmentInHours(date, Calendar.DATE);
     hourFlagmentCounts[hourFragment]++;
 }
 
