@@ -12,7 +12,13 @@ title: Java使用org.apache.commons.lang3.time.DateUtils求时间片计数
 
 ```java
 List<String> dateMarkLsit = getDateMarkListFromYear("2015");
-int[] hourFlagmentCounts = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int[] hourFlagmentCounts = new int[]{
+    0,0,0,0,0,
+    0,0,0,0,0,
+    0,0,0,0,0,
+    0,0,0,0,0,
+    0,0,0,0
+};
 for(String dateStr : dateMarkList) {
     Date date = DateTimeUtil.parseDate(dateStr, "yyyy-MM-dd HH:mm:ss.SSS")
     // range from 0 to 23 -> [0,23]
