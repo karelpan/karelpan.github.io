@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+   <title>为什么会有大数据</title>
+   <meta name="author" content="Tom Preston-Werner" />
+   <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
+   <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
+
+   <!-- syntax highlighting CSS -->
+   <link rel="stylesheet" href="/css/syntax.css" type="text/css" />
+
+   <!-- Homepage CSS -->
+   <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection" />
+
+   <!-- Typekit -->
+   <script type="text/javascript" src="http://use.typekit.com/jpd0pfm.js"></script>
+   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+<body>
+
+<!-- ClickTale Top part -->
+<script type="text/javascript">
+var WRInitTime=(new Date()).getTime();
+</script>
+<!-- ClickTale end of Top part -->
+
+<div class="site">
+  <div class="title">
+    <a href="/">Pan's Blog</a>
+    <a class="extra" href="/">home</a>
+  </div>
+
+  <div id="post">
+<h1 id="section">为什么会有大数据</h1>
+
+<p class="meta">23 August 2016 - Su Zhou</p>
+
+<ul>
+  <li>什么是大数据
+    <ul>
+      <li>姑且定义为 无法被符合服务等级的单台计算机处理 或 存储的任何结果集。</li>
+      <li>@see <a href="http://www.cs.cornell.edu/projects/ladis2009/talks/dean-keynote-ladis2009pdf">http://www.cs.cornell.edu/projects/ladis2009/talks/dean-keynote-ladis2009pdf</a></li>
+    </ul>
+  </li>
+  <li>大数据背后的核心思想
+    <ul>
+      <li>把数据分发到多个节点</li>
+      <li>把计算逻辑移动到数据附近</li>
+      <li>计算节点进行本地数据处理</li>
+      <li>优选顺序读，次之随机读</li>
+    </ul>
+  </li>
+  <li>大数据编程模型
+    <ul>
+      <li>大规模并行处理(Massively Parallel Processing, MPP)数据库系统：EMC公司的Greenplum系统和IBM公司的Netezza系统就是这样的系统</li>
+    </ul>
+  </li>
+</ul>
+<pre><code>
+MPP 的核心思想是把数据按照某一列或者某一组列的值，按照某种形式进行划分，以分别处理。
+这样的系统有个明显的缺点。你需要在算法设计的时候就决定数据如何划分。二划分准则通常由底层的用例来决定。
+如此依赖就不是和临时的数据查询需求。某些数据的查询，由于数据在各个节点的划分合理，从而执行速度很快。而有些数据查询，由于数据在各个节点的划分不合理（与数据的访问方式不一致）导致其执行速度异常缓慢，为了得到结果，系统需要通过网络来进行大量的数据交换。
+为了解决这个缺陷，大规模并行处理数据库系统经常采用的办法是巴蜀句存储多份，并按照不同的准则来进行划分。根据不同的查询需求，选择不同的数据集。
+</code></pre>
+<div class="highlighter-rouge"><pre class="highlight"><code>- 内存数据库系统：Oracle公司的Exalytics和SAP公司的HANA正是此类系统
+</code></pre>
+</div>
+<pre><code>
+从系统运行的角度来看，内存数据库系统类似与MPP系统。他们的不同之处在于，内存数据库系统的每个节点拥有巨大容量的内存，并且大部分数据会被预先加载道内存中。SAP公司的HANA系统就是按照这个原则来运行的。另外一些系统，比如Oracle公司的Exalytics系统，利用特殊硬件，一个应用程序就可以管理执行多个主机。就本质来说，内存数据库就像是带有SQL接口的MPP数据库系统。
+内存数据库系统的商业版本中有个重要的缺点是，其中内置了大量的硬件和软件。诚然，这些系统拥有专用设备和特定硬件，但这通常费用高昂。如果用为这些内存数据库系统准备的商用硬件来扩容内存数据系统集群是非常方便的。
+下面举个例子，假设一个商用服务器有25GB RAM。我们要搭建1TB容量的内存数据库就需要40台以上的主机（考虑道还有其他业务需要使用这个服务器）。1TB也未必够用，但是我们的集群节点数已经达到了40个。扩容虽然方便，但是价格不菲。
+</code></pre>
+<div class="highlighter-rouge"><pre class="highlight"><code>- MapReduce系统：运用广泛，类似的开源实现比如Hadoop
+</code></pre>
+</div>
+<pre><code>
+MapReduce 编程泛型是现在非常流行的方案。 截至目前（2016）MapReduce 框架已被广泛的用于大数据的处理过程（four methods）。 Hadoop 是一个开源实现的 MapReduce（MR）框架，Hadoop系统对MapReduce框架的实现具有
+1.使用商业级别的硬件。这里不是指笔记本或者台式机。尽管计算集群是商业级别，但是我们可以使用常用的硬件设备来搭建。
+2.无需事先定义数据划分准则来把数据分配到各个计算节点。
+3.用户仅需实现定义两个独立的处理过程：Map和Reduce
+MapReduce 框架追求的目的是 最高吞吐量（IO），并不追求极致的计算性能， 大规模计算的场景，并不适合 使用 MapReduce框架
+</code></pre>
+<div class="highlighter-rouge"><pre class="highlight"><code>- 整体同步并行（Bulk Synchronous Parallel, BSP）系统： Apache HAMA 和 Apache Giraph 就是这样的系统
+</code></pre>
+</div>
+<pre><code>
+整体同步并行(BSP)系统的运行过程和 MapReduce 过程非常相似。与MR程序在它的处理循环结束后即可终止不同的是， BSP系统程序执行由一系列的process组成，这些process 保持同步（synchronize on a barrier），向主节点发送数据并进行相关信息交换(exchange relevant information)。每当一次迭代执行完毕，主节点会通知每个数据处理节点进行下一次迭代。
+</code></pre>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+  </ul>
+</div>
+
+  <div class="footer">
+    <div class="contact">
+      <p>
+        Pan's Blog
+        <!--<br />
+        Cofounder of
+          <a href="https://codestarter.org/">Codestarter</a>,
+          <a href="https://github.com/">GitHub</a>
+        <br />-->
+        karelpan@gmail.com
+      </p>
+    </div>
+    <div class="contact">
+      <p>
+        <a href="http://github.com/karelpan/">github.com/karelpan</a><br />
+      </p>
+    </div>
+    <!--<div class="rss">
+      <a href="http://feeds.feedburner.com/tom-preston-werner">
+        <img src="/images/rss.png" alt="Subscribe to RSS Feed" />
+      </a>
+    </div>-->
+  </div>
+</div>
+
+<!--<a href="http://github.com/karelpan"><img style="position: absolute; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" /></a>-->
+
+<!-- ClickTale Bottom part -->
+<div id="ClickTaleDiv" style="display: none;"></div>
+<script type="text/javascript">
+if(document.location.protocol!='https:')
+  document.write(unescape("%3Cscript%20src='http://s.clicktale.net/WRb.js'%20type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+if(typeof ClickTale=='function') ClickTale(206,0.3,"www03");
+</script>
+<!-- ClickTale end of Bottom part -->
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-6016902-1");
+pageTracker._trackPageview();
+</script>
+<!-- Google Analytics end -->
+
+</body>
+</html>
