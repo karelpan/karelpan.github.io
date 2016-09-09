@@ -157,7 +157,6 @@ import java.util.List;
  * 
  * elasticsearch 查询结果批次回调处理类 , (即 handler)
  * 
- * @author zhujian,  zhen.pan
  */
 public interface ElasticsearchResultCallback<T> {
 
