@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+   <title>ElasticSearch 支持 From 和 size 操作的Scroll查询 (1)</title>
+   <meta name="author" content="Tom Preston-Werner" />
+   <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
+   <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
+
+   <!-- syntax highlighting CSS -->
+   <link rel="stylesheet" href="/css/syntax.css" type="text/css" />
+
+   <!-- Homepage CSS -->
+   <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection" />
+
+   <!-- Typekit -->
+   <script type="text/javascript" src="http://use.typekit.com/jpd0pfm.js"></script>
+   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+<body>
+
+<!-- ClickTale Top part -->
+<script type="text/javascript">
+var WRInitTime=(new Date()).getTime();
+</script>
+<!-- ClickTale end of Top part -->
+
+<div class="site">
+  <div class="title">
+    <a href="/">Pan's Blog</a>
+    <a class="extra" href="/">home</a>
+  </div>
+
+  <div id="post">
+<h1 id="elasticsearch--from--size-scroll-1">ElasticSearch 支持 From 和 size 操作的Scroll查询 (1)</h1>
+
+<p class="meta">09 September 2016 - Su Zhou</p>
+
+<h1 id="section">前言</h1>
+<p>from 和 size 查询对于非scroll 查询， elasticseach默认支持的非常好。
+使用 Java Client 也可以非常方便的进行查询， 这里就不做冗余介绍了。</p>
+
+<p>我们这里要探讨的是 基于 Scroll 的 from - size 查询。</p>
+
+<h2 id="scroll-">Scroll 查询</h2>
+<div class="highlighter-rouge"><pre class="highlight"><code>Scroll 是滚动查询，比如有的查询需要翻页，那么这个时候滚动查询就上场了。 
+可以设置每次滚动查询的数量 scrollSize 比如 10000
+</code></pre>
+</div>
+<ul>
+  <li>除了翻页，为了保证Client的处理不会因以此查询太多，处理数据时内存溢出， 我们会采用scroll的方式查询大数据集，比如一次查询 3000000 的数据，并从查询的每条数据中提取处某几个字段， 这个时候 scroll 可以很大程度上在保证查询的稳定性（大大减小内存溢出的可能性）</li>
+</ul>
+
+<h2 id="section-1">主要处理点</h2>
+<div class="highlighter-rouge"><pre class="highlight"><code>from 和 size 的区间  和  每次 scroll 区间的 判断和控制
+</code></pre>
+</div>
+
+<h3 id="scroll-size-scroll--from-size--scrollsize--realscrollsize--scrollsize">1. 获取实际需要 Scroll 的size， 最后一次Scroll 根据 from-size 和 scrollSize 的不同，实际需要查询的 realScrollSize 往往会小于设定的 scrollSize</h3>
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">generateRealScrollSize</span><span class="p">(</span><span class="kt">int</span> <span class="n">reScrollCount</span><span class="o">,</span> <span class="kt">int</span> <span class="n">scrollSize</span><span class="o">,</span> <span class="kt">int</span> <span class="n">from</span><span class="o">,</span> <span class="kt">int</span> <span class="n">size</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">start</span>       <span class="o">=</span> <span class="n">scrollSize</span> <span class="o">*</span> <span class="n">reScrollCount</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">end</span>         <span class="o">=</span> <span class="n">scrollSize</span> <span class="o">*</span> <span class="o">(</span><span class="n">reScrollCount</span> <span class="o">+</span> <span class="mi">1</span><span class="o">);</span>
+    <span class="kt">int</span> <span class="n">expectedEnd</span> <span class="o">=</span> <span class="n">from</span> <span class="o">+</span> <span class="n">size</span><span class="o">;</span>
+
+    <span class="k">if</span><span class="o">(</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="k">return</span> <span class="n">scrollSize</span><span class="o">;</span>
+
+    <span class="k">if</span> <span class="o">(</span><span class="n">expectedEnd</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">scrollSize</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">expectedEnd</span> <span class="o">-</span> <span class="n">start</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h3 id="scroll--1">2. 使用 scroll 进行查询的主方法</h3>
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="cm">/**
+ * 非阻塞读取ES， 结果处理方法 和 ES 返回解析方法， 使用模板归一化处理流程
+ *
+ * @param srb
+ * @param scrollSize
+ * @param from
+ * @param size
+ * @param clazz
+ * @param handler
+ * @param adaptor
+ * @throws InterruptedException
+ * @throws ExecutionException
+ */</span>
+<span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">searchWithHandlerAndAdapter</span><span class="o">(</span><span class="kd">final</span> <span class="n">SearchRequestBuilder</span> <span class="n">srb</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">scrollSize</span><span class="o">,</span>
+                                                   <span class="kd">final</span> <span class="kt">int</span> <span class="n">from</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">size</span><span class="o">,</span>
+                                                   <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">clazz</span><span class="o">,</span>
+                                                   <span class="kd">final</span> <span class="n">ElasticsearchResultCallback</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">handler</span><span class="o">,</span>
+                                                   <span class="kd">final</span> <span class="n">IElasticsearchHitsAdaptor</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">adaptor</span><span class="o">)</span>
+        <span class="kd">throws</span> <span class="n">InterruptedException</span><span class="o">,</span> <span class="n">ExecutionException</span> <span class="o">{</span>
+    <span class="kd">final</span> <span class="n">LinkedBlockingQueue</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">queue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedBlockingQueue</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;();</span>
+
+    <span class="c1">// register</span>
+    <span class="kd">final</span> <span class="kt">int</span> <span class="n">maxIndex</span>      <span class="o">=</span> <span class="n">from</span> <span class="o">+</span> <span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="o">;</span>
+    <span class="kt">int</span>       <span class="n">reScrollCount</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="c1">// re-scroll count</span>
+    <span class="kt">boolean</span>   <span class="n">isFinished</span>    <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+
+    <span class="n">SearchResponse</span> <span class="n">response</span> <span class="o">=</span> <span class="n">srb</span><span class="o">.</span><span class="na">setScroll</span><span class="o">(</span><span class="n">TimeValue</span><span class="o">.</span><span class="na">timeValueMinutes</span><span class="o">(</span><span class="n">Const</span><span class="o">.</span><span class="na">MAX_SCROLL_KEEPALIVE_MINUTES</span><span class="o">))</span>
+                                 <span class="o">.</span><span class="na">setSize</span><span class="o">(</span><span class="n">generateRealScrollSize</span><span class="o">(</span><span class="n">reScrollCount</span><span class="o">,</span>
+                                                                 <span class="n">scrollSize</span><span class="o">,</span>
+                                                                 <span class="n">from</span><span class="o">,</span>
+                                                                 <span class="n">size</span><span class="o">))</span>
+                                 <span class="o">.</span><span class="na">execute</span><span class="o">().</span><span class="na">actionGet</span><span class="o">();</span>
+
+    <span class="n">ExecutorService</span> <span class="n">singleThread</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">newSingleThreadExecutor</span><span class="o">();</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">FutureTask</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">&gt;</span> <span class="n">future</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+            <span class="n">SearchHit</span><span class="o">[]</span> <span class="n">hits</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">getHits</span><span class="o">().</span><span class="na">getHits</span><span class="o">();</span>
+
+
+            <span class="c1">// register {scroll.firstIndex, scroll.lastIndex}</span>
+            <span class="kt">int</span><span class="o">[]</span> <span class="n">scroll</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">2</span><span class="o">];</span>
+            <span class="n">scroll</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">reScrollCount</span> <span class="o">*</span> <span class="n">scrollSize</span><span class="o">;</span>
+            <span class="n">scroll</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">scroll</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="n">hits</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">;</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">hits</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">from</span> <span class="o">&lt;=</span> <span class="n">scroll</span><span class="o">[</span><span class="mi">1</span><span class="o">])</span> <span class="o">{</span> <span class="c1">// from &lt;= 本次 scroll 的 last 元素的 Index， 执行数据收集</span>
+                    <span class="c1">// 使用 parser 解析， 解藕</span>
+                    <span class="n">List</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">items</span> <span class="o">=</span> <span class="n">adaptor</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="n">hits</span><span class="o">,</span> <span class="n">clazz</span><span class="o">);</span>
+                    <span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">max</span><span class="o">((</span><span class="n">from</span> <span class="o">-</span> <span class="n">scroll</span><span class="o">[</span><span class="mi">0</span><span class="o">]),</span> <span class="mi">0</span><span class="o">);</span>
+                    <span class="kt">int</span> <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// size == 0 读取从 from 处开始的所有</span>
+                        <span class="n">end</span> <span class="o">=</span> <span class="n">hits</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">hits</span><span class="o">.</span><span class="na">length</span> <span class="o">!=</span> <span class="n">scrollSize</span><span class="o">)</span> <span class="n">isFinished</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span> <span class="c1">// size ！= 0 ， 开始检测结尾</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">maxIndex</span> <span class="o">&gt;</span> <span class="n">scroll</span><span class="o">[</span><span class="mi">1</span><span class="o">])</span> <span class="o">{</span>
+                            <span class="n">end</span> <span class="o">=</span> <span class="n">hits</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+                            <span class="c1">// 本次 scroll 的 hits &lt; scrollSize，说明已经全部收集，结束收集</span>
+                            <span class="k">if</span> <span class="o">(</span><span class="n">hits</span><span class="o">.</span><span class="na">length</span> <span class="o">!=</span> <span class="n">scrollSize</span><span class="o">)</span> <span class="n">isFinished</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span> <span class="c1">// MaxIndex &lt; scroll.lastIndex, 说明抵达 需要收集的数据集的 最大数量，结束收集</span>
+                            <span class="n">end</span> <span class="o">=</span> <span class="o">(</span><span class="n">maxIndex</span> <span class="o">-</span> <span class="n">scroll</span><span class="o">[</span><span class="mi">0</span><span class="o">])</span> <span class="o">+</span> <span class="mi">1</span><span class="o">;</span>
+                            <span class="n">isFinished</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span>
+                    <span class="k">for</span> <span class="o">(;</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="n">end</span><span class="o">;</span> <span class="n">start</span><span class="o">++)</span> <span class="n">queue</span><span class="o">.</span><span class="na">add</span><span class="o">((</span><span class="n">E</span><span class="o">)</span> <span class="n">items</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">start</span><span class="o">));</span>
+
+                    <span class="c1">// 另起线程（无限Integer.Max size的阻塞队列）,处理本次从ES中获取的结果集</span>
+                    <span class="c1">// 不阻塞当前从Elasticsearch读取的线程</span>
+                    <span class="n">singleThread</span><span class="o">.</span><span class="na">submit</span><span class="o">(</span><span class="n">future</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FutureTask</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">&gt;(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+                        <span class="nd">@Override</span>
+                        <span class="kd">public</span> <span class="kt">void</span> <span class="n">run</span><span class="o">()</span> <span class="o">{</span>
+                            <span class="n">List</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">results</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;();</span>
+                            <span class="n">queue</span><span class="o">.</span><span class="na">drainTo</span><span class="o">(</span><span class="n">results</span><span class="o">,</span> <span class="n">scrollSize</span><span class="o">);</span>
+                            <span class="n">handler</span><span class="o">.</span><span class="na">doWithEachResult</span><span class="o">((</span><span class="n">List</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;)</span> <span class="n">results</span><span class="o">);</span>
+                        <span class="o">}</span>
+                    <span class="o">},</span> <span class="kc">null</span><span class="o">));</span>
+                <span class="o">}</span>
+
+                <span class="kd">final</span> <span class="n">String</span> <span class="n">scrollId</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">getScrollId</span><span class="o">();</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span> <span class="c1">// 释放句柄</span>
+                <span class="k">if</span> <span class="o">(!</span><span class="n">isFinished</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="c1">// 继续scroll 从ES获取结果</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="n">getClient</span><span class="o">().</span><span class="na">prepareSearchScroll</span><span class="o">(</span><span class="n">scrollId</span><span class="o">)</span>
+                                          <span class="o">.</span><span class="na">setScroll</span><span class="o">(</span><span class="n">TimeValue</span><span class="o">.</span><span class="na">timeValueMinutes</span><span class="o">(</span><span class="mi">3</span><span class="o">)).</span><span class="na">execute</span><span class="o">().</span><span class="na">actionGet</span><span class="o">();</span>
+                    <span class="n">reScrollCount</span><span class="o">++;</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">isFinished</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+            <span class="o">}</span>
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">isFinished</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">future</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span><span class="c1">// 从开始就没hits的情况</span>
+                    <span class="n">future</span><span class="o">.</span><span class="na">get</span><span class="o">();</span> <span class="c1">// ES结果集读取结束，等待最后一个结果处理线程结束</span>
+                    <span class="n">future</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                <span class="o">}</span>
+                <span class="k">break</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+        <span class="n">singleThread</span><span class="o">.</span><span class="na">shutdown</span><span class="o">();</span> <span class="c1">// destroy thread service</span>
+        <span class="n">singleThread</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="handler-">2.1 handler 接口定义</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+
+<span class="cm">/**
+ * 
+ * elasticsearch 查询结果批次回调处理类 , (即 handler)
+ * 
+ */</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">ElasticsearchResultCallback</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+
+	<span class="kt">void</span> <span class="n">doWithEachResult</span><span class="o">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">results</span><span class="o">);</span>
+
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="adaptor-">2.2 adaptor 接口定义</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">org.elasticsearch.search.SearchHit</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+
+<span class="cm">/**
+ * 查询结果的 解析器模板
+ * @param &lt;T&gt;
+ * @author zhen.pan
+ */</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">IElasticsearchHitsAdaptor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">parse</span><span class="o">(</span><span class="n">SearchHit</span><span class="o">[]</span> <span class="n">hits</span><span class="o">,</span> <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">clazz</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h3 id="section-2">3. 我们如何使用呢？</h3>
+<p>我会在， “支持 From 和 size 操作的Scroll查询 (2)” 中进行讲述</p>
+
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li><span>28 Aug 2016</span> &raquo; <a href="/2016/08/28/Hadoop%E9%9B%86%E7%BE%A4%E7%9A%84%E4%B8%80%E4%BA%9B%E6%B3%A8%E6%84%8F%E7%82%B9(%E4%B8%80).html">Hadoop 集群的一些注意点(一)</a></li>
+    
+      <li><span>25 Aug 2016</span> &raquo; <a href="/2016/08/25/%E4%BD%BF%E7%94%A8Java%E7%9A%84Apache%E5%BA%93DateUtils%E6%B1%82%E6%97%B6%E9%97%B4%E7%89%87%E6%95%B0(2)-%E5%9F%BA%E4%BA%8EWeek%E6%B1%82%E6%97%B6%E9%97%B4%E7%89%87.html">Java使用org.apache.commons.lang3.time.DateUtils求时间片计数(2)，基于Week求时间片</a></li>
+    
+      <li><span>24 Aug 2016</span> &raquo; <a href="/2016/08/24/%E4%BD%BF%E7%94%A8Java%E7%9A%84Apache%E5%BA%93DateUtils%E6%B1%82%E6%97%B6%E9%97%B4%E7%89%87%E8%AE%A1%E6%95%B0.html">Java使用org.apache.commons.lang3.time.DateUtils求时间片计数</a></li>
+    
+  </ul>
+</div>
+
+<!-- 多说评论框 start -->
+<div class="ds-thread" 
+data-thread-key="" 
+data-title="" 
+data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"karelpan"};
+(function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+        || document.getElementsByTagName('body')[0]).appendChild(ds);
+})();
+</script>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.4.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(document).on(‘click’, ‘#ds-thread textarea[name=message]’, function(){ $(‘#ds-sync-checkbox’).prop(‘checked’, false); });
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+  <div class="footer">
+    <div class="contact">
+      <p>
+        Pan's Blog
+        <!--<br />
+        Cofounder of
+          <a href="https://codestarter.org/">Codestarter</a>,
+          <a href="https://github.com/">GitHub</a>
+        <br />-->
+        karelpan@gmail.com
+      </p>
+    </div>
+    <div class="contact">
+      <p>
+        <a href="http://github.com/karelpan/">github.com/karelpan</a><br />
+      </p>
+    </div>
+    <!--<div class="rss">
+      <a href="http://feeds.feedburner.com/tom-preston-werner">
+        <img src="/images/rss.png" alt="Subscribe to RSS Feed" />
+      </a>
+    </div>-->
+  </div>
+</div>
+
+<!--<a href="http://github.com/karelpan"><img style="position: absolute; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" /></a>-->
+
+<!-- ClickTale Bottom part -->
+<div id="ClickTaleDiv" style="display: none;"></div>
+<script type="text/javascript">
+if(document.location.protocol!='https:')
+  document.write(unescape("%3Cscript%20src='http://s.clicktale.net/WRb.js'%20type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+if(typeof ClickTale=='function') ClickTale(206,0.3,"www03");
+</script>
+<!-- ClickTale end of Bottom part -->
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-6016902-1");
+pageTracker._trackPageview();
+</script>
+<!-- Google Analytics end -->
+
+</body>
+</html>

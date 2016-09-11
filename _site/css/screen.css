@@ -195,3 +195,6 @@ ul.posts {
   #related h2 {
     margin-bottom: 1em;
   }
+
+#ds-thread.ds-thread #ds-reset .ds-comments-info .ds-comments-tabs li.ds-tab .ds-comments-tab-weib {display: none;}
+#ds-thread.ds-thread .ds-powered-by { display: none; }  

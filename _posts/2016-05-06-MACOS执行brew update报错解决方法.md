@@ -1,6 +1,7 @@
 ---
 layout: post
 title: 解决MAC OS新系统更新后，执行``brew update``报错
+uuid: 0a2482d6-77b9-11e6-a9af-005056359bbd
 ---
 
  {{ page.title }}
