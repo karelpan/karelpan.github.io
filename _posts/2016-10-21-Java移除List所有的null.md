@@ -9,6 +9,7 @@ uuid: 1ce2422e-9734-11e6-9bf4-005056359bbd
 
 <p class="meta">21 Oct 2016 - Su Zhou</p>
 
+
 ## Plain Java
 
 ```java
@@ -22,6 +23,8 @@ or
 List<Integer> list = Lists.newArrayList(null, 1, null);
 list.removeAll(Collections.singleton(null));
 ```
+
+
 
 ## Use Google Guava
 
@@ -38,12 +41,16 @@ List<Integer> listWithoutNulls = Lists.newArrayList(
 Iterables.filter(list, Predicates.notNull()));
 ```
 
+
+
 ## Use Apache Commons Collections
 
 ```java
 List<Integer> list = Lists.newArrayList(null, 1, 2, null, 3, null);
 CollectionUtils.filter(list, PredicateUtils.notNullPredicate());
 ```
+
+
 
 ## Da Da Da Da~  Java 8
 
