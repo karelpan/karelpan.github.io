@@ -10,7 +10,7 @@ uuid: 1ce2422e-9734-11e6-9bf4-005056359bbd
 <p class="meta">21 Oct 2016 - Su Zhou</p>
 
 
-## Plain Java
+## 1. Plain Java
 能够使用Java基本库优雅解决的，就不要引入更多的依赖
 
 ```java
@@ -28,7 +28,7 @@ list.removeAll(Collections.singleton(null));
 第二种比起第一种效率要高， 建议自己 benchmark 看结果，然后看源码，明白温和 第二种性能高 
 
 
-## Use Google Guava
+## 2. 使用 Google Guava
 Guava 是个优秀的库， 他也提供了非常明了的操作API
 
 ```java
@@ -47,7 +47,7 @@ Iterables.filter(list, Predicates.notNull()));
 
 
 
-## Use Apache Commons Collections
+## 3. 使用 Apache Commons Collections
 除了Guava ，Apache 的Commons库也是经常使用的（自己看库，会发现Guava的代码质量和优雅程度，明显优于Apache Commons 库，建议直接看代码，有很直观的了解，建立新Java 代码观 ）
 
 ```java
@@ -84,5 +84,3 @@ or
 List<Integer> listWithoutNulls = Lists.newArrayList(null, 1, 2, null, 3, null);
 listWithoutNulls.removeIf(p -> p == null);
 ```
-
-Look! The last Java8 solution is clearest.
