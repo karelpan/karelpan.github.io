@@ -24,11 +24,13 @@ or
 List<Integer> list = Lists.newArrayList(null, 1, null);
 list.removeAll(Collections.singleton(null));
 ```
+
 第二种比起第一种效率要高， 建议自己 benchmark 看结果，然后看源码，明白温和 第二种性能高 
 
 
 ## Use Google Guava
 Guava 是个优秀的库， 他也提供了非常明了的操作API
+
 ```java
 List<Integer> list = Lists.newArrayList(null, 1, null);
 Iterables.removeIf(list, Predicates.isNull());
@@ -76,9 +78,11 @@ list.stream().filter(i -> i != null).collect(Collectors.toList());
 or
 
 最优雅解决方案
+
 ```java
 // 相信这个才是最优雅的， 建议多读Java8的源码，特别是 Stream API（Stream API 构筑于 NIO2 之上）
 List<Integer> listWithoutNulls = Lists.newArrayList(null, 1, 2, null, 3, null);
 listWithoutNulls.removeIf(p -> p == null);
 ```
+
 Look! The last Java8 solution is clearest.
