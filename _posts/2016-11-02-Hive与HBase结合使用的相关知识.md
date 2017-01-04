@@ -33,4 +33,4 @@ TBLPROPERTIES ("hbase.table.name" = "APP_Per_bak_statistics");
 
 这样的创建方式， 会在使用Hive 对Hive表 APP_Per_bak_statistics_Hbase 进行 insert 操作的时候， HBase 的表 APP_Per_bak_statistics 中也会同步的插入同样的数据 
 
-## Q2. 
+## Q2. TODO
