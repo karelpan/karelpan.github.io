@@ -11,10 +11,10 @@ uuid: 30d758a0-a0da-11e6-bfc2-005056359bbd
 
 # Hive 和 HBase 在 hadoop 生态圈内， 一般总是结合着使用
 相关的文章有
-* [让 Hive Scripts 可以使用 HBase](http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_ig_hive_hbase.html#topic_18_10)
-* [使用 Hive 在安全受限的 HBase Server 上运行 query 操作](http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_sg_hive_query_secure_hbase.html#topic_9_3)
-* [Hive 使用引导](http://www.cloudera.com/documentation/enterprise/latest/topics/hive.html#hbase)
-* [HBase 使用引导](http://www.cloudera.com/documentation/enterprise/latest/topics/hbase.html)
+ * [让 Hive Scripts 可以使用 HBase](http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_ig_hive_hbase.html#topic_18_10)
+ * [使用 Hive 在安全受限的 HBase Server 上运行 query 操作](http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_sg_hive_query_secure_hbase.html#topic_9_3)
+ * [Hive 使用引导](http://www.cloudera.com/documentation/enterprise/latest/topics/hive.html#hbase)
+ * [HBase 使用引导](http://www.cloudera.com/documentation/enterprise/latest/topics/hbase.html)
 
 ## Q1. 如何在在Hive和HBase间建起桥梁
 A: 我们可以使用如下的语句，在Hue管理控制界面，进行Hive表创建; 
