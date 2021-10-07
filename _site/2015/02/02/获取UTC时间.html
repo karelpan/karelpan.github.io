@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>Java使用org.apache.commons.lang3.time.DateUtils求时间片计数</title>
+   <title>获取UTC时间</title>
    <meta name="author" content="Tom Preston-Werner" />
    <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
    <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
@@ -32,35 +32,29 @@ var WRInitTime=(new Date()).getTime();
   </div>
 
   <div id="post">
-<h1 id="java使用orgapachecommonslang3timedateutils求时间片计数">Java使用org.apache.commons.lang3.time.DateUtils求时间片计数</h1>
+<h1 id="获取utc时间">获取UTC时间</h1>
 
-<p class="meta">24 August 2016 - Su Zhou</p>
+<h1 id="获取utc时间-1">获取UTC时间</h1>
 
-<ul>
-  <li>求时间片样例，比如：求出一份数据中，一年内小区车辆出入的时间点分布(以小时来制作分布图，以天为分布采样基准)，进和出分别算一次记录</li>
-</ul>
-
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">dateMarkLsit</span> <span class="o">=</span> <span class="n">getDateMarkListFromYear</span><span class="o">(</span><span class="s">"2015"</span><span class="o">);</span>
-<span class="kt">int</span><span class="o">[]</span> <span class="n">hourFlagmentCounts</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span>
-<span class="o">};</span>
-<span class="k">for</span><span class="o">(</span><span class="nc">String</span> <span class="n">dateStr</span> <span class="o">:</span> <span class="n">dateMarkList</span><span class="o">)</span> <span class="o">{</span>
-    <span class="nc">Date</span> <span class="n">date</span> <span class="o">=</span> <span class="nc">DateTimeUtil</span><span class="o">.</span><span class="na">parseDate</span><span class="o">(</span><span class="n">dateStr</span><span class="o">,</span> <span class="s">"yyyy-MM-dd HH:mm:ss.SSS"</span><span class="o">)</span>
-    <span class="c1">// range from 0 to 23 -&gt; [0,23]</span>
-    <span class="kt">long</span> <span class="n">hourFragment</span> <span class="o">=</span> <span class="nc">DateUtils</span><span class="o">.</span><span class="na">getFragmentInHours</span><span class="o">(</span><span class="n">date</span><span class="o">,</span> <span class="nc">Calendar</span><span class="o">.</span><span class="na">DATE</span><span class="o">);</span>
-    <span class="n">hourFlagmentCounts</span><span class="o">[</span><span class="n">hourFragment</span><span class="o">]++;</span>
-<span class="o">}</span>
-
-<span class="c1">// 将数据进行渲染</span>
-<span class="n">renderToChartUI</span><span class="o">(</span><span class="n">hourFlagmentCounts</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Calendar</span> <span class="n">calendar</span> <span class="o">=</span> <span class="nc">Calendar</span><span class="o">.</span><span class="na">getInstance</span><span class="o">();</span>
+<span class="kt">int</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="nc">Calendar</span><span class="o">.</span><span class="na">ZONE_OFFSET</span><span class="o">);</span> 
+<span class="n">calendar</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="nc">Calendar</span><span class="o">.</span><span class="na">MILLISECOND</span><span class="o">,</span> <span class="o">-</span><span class="n">offset</span><span class="o">);</span>
+<span class="nc">Date</span> <span class="n">date</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="na">getTime</span><span class="o">();</span> 
 </code></pre></div></div>
-<p>注意： DateUtils 并不支持所有的Calendar-Fragemnt， 想知道支持的信息， 可查看对应版本的 DateUtils
-源码中方法getFragment(Calendar calendar, int fragment, int unit)的实现，可和Java核心库的Calendar类对比查看。</p>
 
+<h1 id="获取utc时间-string">获取UTC时间–&gt; String</h1>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Calendar</span> <span class="n">calendar</span> <span class="o">=</span> <span class="nc">Calendar</span><span class="o">.</span><span class="na">getInstance</span><span class="o">();</span>
+<span class="kt">int</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="nc">Calendar</span><span class="o">.</span><span class="na">ZONE_OFFSET</span><span class="o">);</span> 
+<span class="n">calendar</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="nc">Calendar</span><span class="o">.</span><span class="na">MILLISECOND</span><span class="o">,</span> <span class="o">-</span><span class="n">offset</span><span class="o">);</span>
+<span class="nc">Date</span> <span class="n">date</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="na">getTime</span><span class="o">();</span> 
+
+<span class="c1">// 这里的 format 格式， 根据需要自定义就好</span>
+<span class="nc">SimpleDateFormat</span> <span class="n">sdf</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">SimpleDateFormat</span><span class="o">(</span><span class="s">"yyyy-MM-dd'T'HH:mm:ss'Z'"</span><span class="o">);</span>
+
+<span class="nc">String</span> <span class="n">formattedTime</span> <span class="o">=</span> <span class="n">sdf</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="n">date</span><span class="o">);</span>
+
+</code></pre></div></div>
 
 </div>
 

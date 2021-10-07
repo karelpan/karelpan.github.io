@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>使用nmon作为监控工具</title>
+   <title>Hive与HBase结合使用的相关知识</title>
    <meta name="author" content="Tom Preston-Werner" />
    <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
    <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
@@ -32,28 +32,42 @@ var WRInitTime=(new Date()).getTime();
   </div>
 
   <div id="post">
-<h1 id="使用nmon作为监控工具">使用nmon作为监控工具</h1>
+<h1 id="hive与hbase结合使用的相关知识">Hive与HBase结合使用的相关知识</h1>
 
-<p class="meta">02 Apr 2016 - Su Zhou</p>
+<p class="meta">02 Nov 2016 - Su Zhou</p>
 
-<p><a href="http://rock3.info/blog/2014/03/25/aix%E7%9B%91%E8%A7%86%E5%B7%A5%E5%85%B7-nmon%E5%92%8Ctopas/">http://rock3.info/blog/2014/03/25/aix%E7%9B%91%E8%A7%86%E5%B7%A5%E5%85%B7-nmon%E5%92%8Ctopas/</a>
-上面是一篇介绍 nmon 的文章</p>
+<h1 id="hive-和-hbase-在-hadoop-生态圈内-一般总是结合着使用">Hive 和 HBase 在 hadoop 生态圈内， 一般总是结合着使用</h1>
+<p>相关的文章有</p>
+<ul>
+  <li><a href="http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_ig_hive_hbase.html#topic_18_10">让 Hive Scripts 可以使用 HBase</a></li>
+  <li><a href="http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_sg_hive_query_secure_hbase.html#topic_9_3">使用 Hive 在安全受限的 HBase Server 上运行 query 操作</a></li>
+  <li><a href="http://www.cloudera.com/documentation/enterprise/latest/topics/hive.html#hbase">Hive 使用引导</a></li>
+  <li><a href="http://www.cloudera.com/documentation/enterprise/latest/topics/hbase.html">HBase 使用引导</a></li>
+</ul>
 
-<p>nmon的官网地址<a href="http://nmon.sourceforge.net/pmwiki.php">http://nmon.sourceforge.net/pmwiki.php</a>
-AIX团队出品</p>
+<h2 id="q1-如何在在hive和hbase间建起桥梁">Q1. 如何在在Hive和HBase间建起桥梁</h2>
+<p>A: 我们可以使用如下的语句，在Hue管理控制界面，进行Hive表创建;</p>
 
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">APP_Per_bak_statistics_Hbase</span> <span class="p">(</span>
+<span class="n">rowkey</span> <span class="n">string</span><span class="p">,</span>
+<span class="nb">date</span> <span class="n">String</span><span class="p">,</span>
+<span class="n">flow_type</span> <span class="n">string</span><span class="p">,</span>
+<span class="n">NowPrice</span> <span class="n">string</span><span class="p">,</span>
+<span class="n">LastPrice</span> <span class="n">string</span>
+<span class="p">)</span> <span class="n">STORED</span> <span class="k">BY</span> <span class="s1">'org.apache.hadoop.hive.hbase.HBaseStorageHandler'</span>
+<span class="k">WITH</span> <span class="n">SERDEPROPERTIES</span> <span class="p">(</span><span class="nv">"hbase.columns.mapping"</span> <span class="o">=</span> <span class="nv">":key,info:date,info:flow_type,info:NowPrice,info:LastPrice"</span><span class="p">)</span>
+<span class="n">TBLPROPERTIES</span> <span class="p">(</span><span class="nv">"hbase.table.name"</span> <span class="o">=</span> <span class="nv">"APP_Per_bak_statistics"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这样的创建方式， 会在使用Hive 对Hive表 APP_Per_bak_statistics_Hbase 进行 insert 操作的时候， HBase 的表 APP_Per_bak_statistics 中也会同步的插入同样的数据</p>
+
+<h2 id="q2-todo">Q2. TODO</h2>
 
 </div>
 
 <div id="related">
   <h2>Related Posts</h2>
   <ul class="posts">
-    
-      <li><span>07 Oct 2021</span> &raquo; <a href="/2021/10/07/Java-Exception.html">Java Exception</a></li>
-    
-      <li><span>15 Nov 2016</span> &raquo; <a href="/2016/11/15/CDH-Oozie-HiveScript2.html">CDH-Oozie-HiveScript2</a></li>
-    
-      <li><span>09 Nov 2016</span> &raquo; <a href="/2016/11/09/MacOS%E5%BF%AB%E6%8D%B7%E9%94%AE%E7%9A%84%E5%BB%BA%E7%AB%8B.html">MacOS 的实用快捷键，特别针对 Win下转过来的用户</a></li>
     
   </ul>
 </div>

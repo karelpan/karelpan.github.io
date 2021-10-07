@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+   <title>ElasticSearch 支持 From 和 size 操作的Scroll查询 (2)</title>
+   <meta name="author" content="Tom Preston-Werner" />
+   <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
+   <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
+
+   <!-- syntax highlighting CSS -->
+   <link rel="stylesheet" href="/css/syntax.css" type="text/css" />
+
+   <!-- Homepage CSS -->
+   <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection" />
+
+   <!-- Typekit -->
+   <script type="text/javascript" src="http://use.typekit.com/jpd0pfm.js"></script>
+   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+<body>
+
+<!-- ClickTale Top part -->
+<script type="text/javascript">
+var WRInitTime=(new Date()).getTime();
+</script>
+<!-- ClickTale end of Top part -->
+
+<div class="site">
+  <div class="title">
+    <a href="/">Pan's Blog</a>
+    <a class="extra" href="/">home</a>
+  </div>
+
+  <div id="post">
+<h1 id="elasticsearch-支持-from-和-size-操作的scroll查询-2">ElasticSearch 支持 From 和 size 操作的Scroll查询 (2)</h1>
+
+<p class="meta">11 September 2016 - Su Zhou</p>
+
+<h1 id="前言">前言</h1>
+<p>继上一篇 <a href="http://karelpan.github.io/2016/09/09/ElasticSearch%E6%94%AF%E6%8C%81From%E5%92%8Csize%E6%93%8D%E4%BD%9C%E7%9A%84Scroll%E6%9F%A5%E8%AF%A2_01.html">ElasticSearch 支持 From 和 size 操作的Scroll查询(1)</a></p>
+
+<h3 id="31-通用的处理adaptor-有定制需求可以实现一套自己的">3.1 通用的处理Adaptor （有定制需求，可以实现一套自己的）</h3>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">com.alibaba.fastjson.JSONArray</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.elasticsearch.search.SearchHit</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.elasticsearch.search.SearchHitField</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.json.JSONObject</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.util.ArrayList</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.Map</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">CommonESFetchAdaptor</span> <span class="kd">implements</span> <span class="nc">IElasticsearchHitsAdaptor</span><span class="o">&lt;</span><span class="nc">JSONObject</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">JSONObject</span><span class="o">&gt;</span> <span class="nf">parse</span><span class="o">(</span><span class="nc">SearchHit</span><span class="o">[]</span> <span class="n">hits</span><span class="o">,</span> <span class="nc">Class</span><span class="o">&lt;?&gt;</span> <span class="n">clazz</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">JSONObject</span><span class="o">&gt;</span> <span class="n">results</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="k">for</span> <span class="o">(</span><span class="nc">SearchHit</span> <span class="n">hit</span> <span class="o">:</span> <span class="n">hits</span><span class="o">)</span> <span class="o">{</span>
+                <span class="kd">final</span> <span class="nc">JSONObject</span> <span class="n">item</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">hit</span><span class="o">.</span><span class="na">getSourceAsString</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">item</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">JSONObject</span><span class="o">();</span>
+                    <span class="k">for</span> <span class="o">(</span><span class="nc">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">SearchHitField</span><span class="o">&gt;</span> <span class="n">entry</span> <span class="o">:</span> <span class="n">hit</span><span class="o">.</span><span class="na">getFields</span><span class="o">().</span><span class="na">entrySet</span><span class="o">())</span> <span class="o">{</span>
+                        <span class="kt">int</span> <span class="n">itemLen</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">getValues</span><span class="o">().</span><span class="na">size</span><span class="o">();</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">itemLen</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="kd">final</span> <span class="nc">JSONArray</span> <span class="n">child</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">JSONArray</span><span class="o">();</span>
+                            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">itemLen</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                                <span class="n">child</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">getValues</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+                            <span class="o">}</span>
+                            <span class="n">item</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">child</span><span class="o">);</span>
+                        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                            <span class="n">item</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">getValue</span><span class="o">());</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">item</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">JSONObject</span><span class="o">(</span><span class="n">hit</span><span class="o">.</span><span class="na">getSourceAsString</span><span class="o">());</span>
+                <span class="o">}</span>
+                <span class="n">item</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"_index"</span><span class="o">,</span> <span class="n">hit</span><span class="o">.</span><span class="na">getIndex</span><span class="o">());</span>
+                <span class="n">item</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"_type"</span><span class="o">,</span> <span class="n">hit</span><span class="o">.</span><span class="na">getType</span><span class="o">());</span>
+                <span class="n">item</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"_id"</span><span class="o">,</span> <span class="n">hit</span><span class="o">.</span><span class="na">getId</span><span class="o">());</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">hit</span><span class="o">.</span><span class="na">getScore</span><span class="o">()</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">item</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"_score"</span><span class="o">,</span> <span class="n">hit</span><span class="o">.</span><span class="na">getScore</span><span class="o">());</span>
+                <span class="o">}</span>
+                <span class="n">item</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"_version"</span><span class="o">,</span> <span class="n">hit</span><span class="o">.</span><span class="na">getVersion</span><span class="o">());</span>
+                <span class="n">results</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">item</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="n">results</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="32-调用层可以这么写">3.2 调用层，可以这么写</h3>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="o">&lt;</span><span class="no">T</span><span class="o">,</span> <span class="nc">TFilterFields</span><span class="o">&gt;</span> <span class="nc">List</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nf">fetchDataByQueryFromES</span><span class="o">(</span>
+    <span class="kd">final</span> <span class="nc">SearchRequestBuilder</span> <span class="n">searchRequestBuilder</span><span class="o">,</span>
+    <span class="kd">final</span> <span class="nc">Integer</span> <span class="n">scrollSize</span><span class="o">,</span>
+    <span class="kd">final</span> <span class="nc">Integer</span> <span class="n">from</span><span class="o">,</span>
+    <span class="kd">final</span> <span class="nc">Integer</span> <span class="n">size</span><span class="o">,</span>
+    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">isField</span><span class="o">,</span>
+    <span class="kd">final</span> <span class="nc">Class</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">clazz</span><span class="o">,</span>
+    <span class="kd">final</span> <span class="nc">String</span> <span class="n">field</span><span class="o">,</span>
+    <span class="kd">final</span> <span class="nc">TFilterFields</span> <span class="n">filterFields</span>
+    <span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+
+    <span class="c1">// ...</span>
+
+    <span class="no">XXXX</span><span class="o">.</span><span class="na">searchWithHandlerAndAdapter</span><span class="o">(</span>
+        <span class="n">searchRequestBuilder</span><span class="o">,</span>
+        <span class="n">scrollSize</span><span class="o">,</span>
+        <span class="n">from</span><span class="o">,</span>
+        <span class="n">size</span><span class="o">,</span>
+        <span class="nc">JSONObject</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+        <span class="k">new</span> <span class="nc">ElasticsearchResultCallback</span><span class="o">&lt;</span><span class="nc">JSONObject</span><span class="o">&gt;()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">doWithEachResult</span><span class="o">(</span><span class="nc">List</span><span class="o">&lt;</span><span class="nc">JSONObject</span><span class="o">&gt;</span> <span class="n">results</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">for</span> <span class="o">(</span><span class="nc">JSONObject</span> <span class="n">result</span> <span class="o">:</span> <span class="n">results</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="nc">String</span> <span class="n">key</span> <span class="o">=</span> <span class="nc">CommonESResultUtils</span><span class="o">.</span><span class="na">buildMultiResultMapKey</span><span class="o">(</span><span class="n">result</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">"_index"</span><span class="o">),</span> <span class="n">result</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">"_type"</span><span class="o">));</span>
+                        <span class="k">if</span> <span class="o">(!</span><span class="n">map</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">key</span><span class="o">))</span> <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="k">new</span> <span class="nc">HashSet</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;());</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">isField</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="k">if</span> <span class="o">(!</span><span class="n">result</span><span class="o">.</span><span class="na">has</span><span class="o">(</span><span class="n">field</span><span class="o">))</span> <span class="k">continue</span><span class="o">;</span>
+                            <span class="k">if</span> <span class="o">(!</span><span class="nc">JSONTypeMethodDictEnum</span><span class="o">.</span><span class="na">containsType</span><span class="o">(</span><span class="n">clazz</span><span class="o">.</span><span class="na">getName</span><span class="o">()))</span>
+                                <span class="k">throw</span> <span class="k">new</span> <span class="nf">Exception</span><span class="o">(</span><span class="s">"Not supported Type, @see JSONTypeMethodDictEnum"</span><span class="o">);</span>
+                            <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">).</span><span class="na">add</span><span class="o">((</span><span class="no">T</span><span class="o">)</span> <span class="nc">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">result</span><span class="o">,</span> <span class="nc">JSONTypeMethodDictEnum</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="n">clazz</span><span class="o">.</span><span class="na">getName</span><span class="o">()),</span> <span class="n">field</span><span class="o">));</span>
+                        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                            <span class="k">if</span> <span class="o">(!</span><span class="n">clazz</span><span class="o">.</span><span class="na">getName</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">"org.json.JSONObject"</span><span class="o">))</span>
+                                <span class="k">throw</span> <span class="k">new</span> <span class="nf">Exception</span><span class="o">(</span><span class="s">"When it is not a field, only support Type org.json.JSONObject"</span><span class="o">);</span>
+                            <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">).</span><span class="na">add</span><span class="o">((</span><span class="no">T</span><span class="o">)</span> <span class="n">result</span><span class="o">);</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">continue</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">},</span>
+        <span class="k">new</span> <span class="nf">CommonESFetchAdaptor</span><span class="o">());</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;(</span><span class="nc">CommonESResultUtils</span><span class="o">.</span><span class="na">intersection</span><span class="o">(</span><span class="n">map</span><span class="o">));</span> 
+    
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>在这里使用到了写的工具类 CommonESResultUtils</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">com.alibaba.fastjson.JSON</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.google.common.collect.Sets</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.apache.commons.lang.StringUtils</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.util.*</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">CommonESResultUtils</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Set</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;&gt;</span> <span class="nf">initMultiResultMap</span><span class="o">(</span><span class="nc">String</span> <span class="n">esIndices</span><span class="o">,</span> <span class="nc">String</span> <span class="n">esTypes</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Set</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashMap</span><span class="o">&lt;&gt;();</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">nexus</span> <span class="o">:</span> <span class="nc">ESOrgJSONQueryBuilder</span><span class="o">.</span><span class="na">splitIndexTypeByESStructure</span><span class="o">(</span><span class="n">esIndices</span><span class="o">,</span> <span class="n">esTypes</span><span class="o">))</span>
+            <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">((</span><span class="n">nexus</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">"."</span> <span class="o">+</span> <span class="n">nexus</span><span class="o">[</span><span class="mi">1</span><span class="o">]),</span> <span class="k">new</span> <span class="nc">HashSet</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;());</span>
+        <span class="k">return</span> <span class="n">map</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="nc">String</span> <span class="nf">buildMultiResultMapKey</span><span class="o">(</span><span class="nc">String</span> <span class="n">esIndex</span><span class="o">,</span> <span class="nc">String</span> <span class="n">esType</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span><span class="o">(</span><span class="nc">StringUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">esIndex</span><span class="o">)</span> <span class="o">||</span> <span class="nc">StringUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">esType</span><span class="o">))</span> <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+
+        <span class="k">return</span> <span class="n">esIndex</span> <span class="o">+</span> <span class="s">"."</span> <span class="o">+</span> <span class="n">esType</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * Map 结果集取交集
+     *
+     *
+     * @param map
+     * @param &lt;T&gt;
+     * @return
+     * @throws Exception
+     */</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nc">Set</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nf">intersection</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Set</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;&gt;</span> <span class="n">map</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="nc">Set</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">items</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashSet</span><span class="o">&lt;&gt;();</span>
+        <span class="c1">// 交集</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">Set</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">set</span> <span class="o">:</span> <span class="n">map</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">items</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">items</span> <span class="o">=</span> <span class="n">set</span><span class="o">;</span>
+                <span class="k">continue</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="nc">Sets</span><span class="o">.</span><span class="na">intersection</span><span class="o">(</span><span class="n">items</span><span class="o">,</span> <span class="n">set</span><span class="o">);</span>
+            <span class="n">set</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+        <span class="o">}</span>
+        <span class="n">map</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+        <span class="k">return</span> <span class="n">items</span><span class="o">;</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+
+
+</code></pre></div></div>
+
+<p>如 3.2， 这样就有了比较通用的处理基于Scroll查询的 from size 版本</p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+  </ul>
+</div>
+
+<!-- 多说评论框 start -->
+<div class="ds-thread" 
+data-thread-key="" 
+data-title="" 
+data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"karelpan"};
+(function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+        || document.getElementsByTagName('body')[0]).appendChild(ds);
+})();
+</script>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.4.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(function(){
+  $(document).on(‘click’, ‘#ds-thread textarea[name=message]’, function(){ $(‘#ds-sync-checkbox’).prop(‘checked’, false); });
+});
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+  <div class="footer">
+    <div class="contact">
+      <p>
+        Pan's Blog
+        <!--<br />
+        Cofounder of
+          <a href="https://codestarter.org/">Codestarter</a>,
+          <a href="https://github.com/">GitHub</a>
+        <br />-->
+        karelpan@gmail.com
+      </p>
+    </div>
+    <div class="contact">
+      <p>
+        <a href="http://github.com/karelpan/">github.com/karelpan</a><br />
+      </p>
+    </div>
+    <!--<div class="rss">
+      <a href="http://feeds.feedburner.com/tom-preston-werner">
+        <img src="/images/rss.png" alt="Subscribe to RSS Feed" />
+      </a>
+    </div>-->
+  </div>
+</div>
+
+<!--<a href="http://github.com/karelpan"><img style="position: absolute; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" /></a>-->
+
+<!-- ClickTale Bottom part -->
+<div id="ClickTaleDiv" style="display: none;"></div>
+<script type="text/javascript">
+if(document.location.protocol!='https:')
+  document.write(unescape("%3Cscript%20src='http://s.clicktale.net/WRb.js'%20type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+if(typeof ClickTale=='function') ClickTale(206,0.3,"www03");
+</script>
+<!-- ClickTale end of Bottom part -->
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-6016902-1");
+pageTracker._trackPageview();
+</script>
+<!-- Google Analytics end -->
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>Java使用org.apache.commons.lang3.time.DateUtils求时间片计数</title>
+   <title>一些有用的英文缩写（一）</title>
    <meta name="author" content="Tom Preston-Werner" />
    <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
    <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
@@ -32,35 +32,67 @@ var WRInitTime=(new Date()).getTime();
   </div>
 
   <div id="post">
-<h1 id="java使用orgapachecommonslang3timedateutils求时间片计数">Java使用org.apache.commons.lang3.time.DateUtils求时间片计数</h1>
+<h1 id="一些有用的英文缩写一">一些有用的英文缩写（一）</h1>
 
-<p class="meta">24 August 2016 - Su Zhou</p>
+<p class="meta">24 Oct 2016 - Su Zhou</p>
 
-<ul>
-  <li>求时间片样例，比如：求出一份数据中，一年内小区车辆出入的时间点分布(以小时来制作分布图，以天为分布采样基准)，进和出分别算一次记录</li>
-</ul>
+<h1 id="句子缩写">句子缩写</h1>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">dateMarkLsit</span> <span class="o">=</span> <span class="n">getDateMarkListFromYear</span><span class="o">(</span><span class="s">"2015"</span><span class="o">);</span>
-<span class="kt">int</span><span class="o">[]</span> <span class="n">hourFlagmentCounts</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span>
-<span class="o">};</span>
-<span class="k">for</span><span class="o">(</span><span class="nc">String</span> <span class="n">dateStr</span> <span class="o">:</span> <span class="n">dateMarkList</span><span class="o">)</span> <span class="o">{</span>
-    <span class="nc">Date</span> <span class="n">date</span> <span class="o">=</span> <span class="nc">DateTimeUtil</span><span class="o">.</span><span class="na">parseDate</span><span class="o">(</span><span class="n">dateStr</span><span class="o">,</span> <span class="s">"yyyy-MM-dd HH:mm:ss.SSS"</span><span class="o">)</span>
-    <span class="c1">// range from 0 to 23 -&gt; [0,23]</span>
-    <span class="kt">long</span> <span class="n">hourFragment</span> <span class="o">=</span> <span class="nc">DateUtils</span><span class="o">.</span><span class="na">getFragmentInHours</span><span class="o">(</span><span class="n">date</span><span class="o">,</span> <span class="nc">Calendar</span><span class="o">.</span><span class="na">DATE</span><span class="o">);</span>
-    <span class="n">hourFlagmentCounts</span><span class="o">[</span><span class="n">hourFragment</span><span class="o">]++;</span>
-<span class="o">}</span>
+<h2 id="1-tbhto-be-honest-老實說">1. tbh：to be honest 老實說</h2>
 
-<span class="c1">// 将数据进行渲染</span>
-<span class="n">renderToChartUI</span><span class="o">(</span><span class="n">hourFlagmentCounts</span><span class="o">);</span>
-</code></pre></div></div>
-<p>注意： DateUtils 并不支持所有的Calendar-Fragemnt， 想知道支持的信息， 可查看对应版本的 DateUtils
-源码中方法getFragment(Calendar calendar, int fragment, int unit)的实现，可和Java核心库的Calendar类对比查看。</p>
+<p>Tbh, I don’t think Jerry will be able to graduate this year.
+老實說，我不覺得 Jerry 今年可以畢業。</p>
 
+<h2 id="2-lmaolaugh-my-ass-off-笑到不行超爆笑">2. lmao：laugh my ass off 笑到不行、超爆笑</h2>
+
+<p>大家應該都看過 “lol” (laugh out loud) 這個表示大笑的三個字母，但除了 lol，其實你也可以用 lmao 呦！字面上的意思就是「把屁股都笑掉了」，就代表超級好笑、笑到不行的意思囉！</p>
+
+<p>A: That annoying professor fell off his chair in front of 300 students!
+B: lmao!
+A: 那個超討人厭的教授在 300 個學生面前從椅子上跌下來耶！
+B: 也太爆笑了吧！</p>
+
+<h2 id="3-btwby-the-way-順帶一提">3. btw：by the way 順帶一提</h2>
+
+<p>John is so rude! How can he do something like that? Btw, there’s no way I’m going to forgive him.
+John 也太沒禮貌了吧！他怎麼可以做出那種事？順帶一提，我是絕對不會原諒他的。</p>
+
+<h2 id="4-ttyltalk-to-you-later-晚點聊">4. ttyl：talk to you later 晚點聊</h2>
+
+<p>Gotta get going. Ttyl!
+我差不多要走了，晚點聊喔！</p>
+
+<h2 id="5-idki-dont-know-我不知道">5. idk：I don’t know 我不知道</h2>
+
+<p>Idk if she’s gonna make it tonight or not.
+我不知道她今晚有沒有辦法來耶。</p>
+
+<h2 id="6-akaas-known-as-也就是以為人所知">6. aka：as known as 也就是、以…為人所知</h2>
+
+<p>Chris, aka Alex’s boyfriend, is going to move to another country.
+Chris，也就是 Alex的男朋友，即將搬去另一個國家了。</p>
+
+<h1 id="單字縮寫">單字縮寫</h1>
+
+<h2 id="7-plzplease-拜託">7. plz：please 拜託</h2>
+
+<p>Daddy, can you come pick me up? Plz!
+爸爸，你可不可以來接我？拜託！</p>
+
+<h2 id="8-thxthanks-謝謝">8. thx：thanks 謝謝</h2>
+
+<p>Can you drop this to the postoffice on your way home? Thx!
+你回家的時候可以順便幫我把這個拿到郵局嗎？謝謝！</p>
+
+<h2 id="9-tmrtomorrow-明天">9. tmr：tomorrow 明天</h2>
+
+<p>Let’s catch up tmr.
+我們明天見面聊聊吧。</p>
+
+<h2 id="10-pplpeople-人們大家">10. ppl：people 人們、大家</h2>
+
+<p>I feel like I really get along with these ppl.
+我覺得我跟這群人很合得來。</p>
 
 </div>
 

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+   <title>CDH-Oozie-HiveScript2</title>
+   <meta name="author" content="Tom Preston-Werner" />
+   <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
+   <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
+
+   <!-- syntax highlighting CSS -->
+   <link rel="stylesheet" href="/css/syntax.css" type="text/css" />
+
+   <!-- Homepage CSS -->
+   <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection" />
+
+   <!-- Typekit -->
+   <script type="text/javascript" src="http://use.typekit.com/jpd0pfm.js"></script>
+   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+<body>
+
+<!-- ClickTale Top part -->
+<script type="text/javascript">
+var WRInitTime=(new Date()).getTime();
+</script>
+<!-- ClickTale end of Top part -->
+
+<div class="site">
+  <div class="title">
+    <a href="/">Pan's Blog</a>
+    <a class="extra" href="/">home</a>
+  </div>
+
+  <div id="post">
+<h1 id="cdh-oozie-hivescript2">CDH-Oozie-HiveScript2</h1>
+
+<h1 id="hivescipt2-在cdh环境下的-oozie-workflow-配置">HiveScipt2 在CDH环境下的 Oozie WorkFlow 配置</h1>
+
+<h2 id="script-配置">Script 配置</h2>
+
+<p>比如，我们使用如下的 Hive 语句作为一个任务， 做到事情为，把某个Hive表中的某天的数据查出来，并且存入临时表
+临时表的格式以 \t 分割，并存为纯文本TEXTFILE</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">IF</span> <span class="k">EXISTS</span> <span class="err">${</span><span class="n">hivevar</span><span class="p">:</span><span class="n">tmptablename</span><span class="err">}</span><span class="p">;</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="err">${</span><span class="n">hivevar</span><span class="p">:</span><span class="n">tmptablename</span><span class="err">}</span> <span class="k">ROW</span> <span class="n">FORMAT</span> <span class="n">DELIMITED</span> <span class="n">FIELDS</span> <span class="n">TERMINATED</span> <span class="k">BY</span><span class="s1">'</span><span class="se">\t</span><span class="s1">'</span>
+<span class="n">STORED</span> <span class="k">AS</span> <span class="n">TEXTFILE</span>
+<span class="k">AS</span> <span class="k">SELECT</span> <span class="err">${</span><span class="n">hivevar</span><span class="p">:</span><span class="n">fields</span><span class="err">}</span> <span class="k">FROM</span> <span class="err">${</span><span class="n">hivevar</span><span class="p">:</span><span class="n">tablename</span><span class="err">}</span>
+<span class="k">WHERE</span> <span class="nb">DATE</span> <span class="o">=</span> <span class="err">${</span><span class="n">hivevar</span><span class="p">:</span><span class="n">field_date</span><span class="err">}</span>
+</code></pre></div></div>
+
+<p>其中： hivevar 是用来传递参数的对象, 在 sql 中的 ${hivevar:tmptablename} 
+      将被 Oozie 中此HiveScript任务配置的对应变量 tmptablename=tmp_table 替代</p>
+
+<p>假设我们此HiveScript的Oozie任务参数是</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tmptablename=tmp_table_name
+tablename=table_name
+fields=*
+field_date=from_unixtime(unix_timestamp()-24*3600,'yyyy-MM')
+</code></pre></div></div>
+
+<p>则，实际执行时，解析后的 Sql，会被替换成下面这样</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">IF</span> <span class="k">EXISTS</span> <span class="n">tmp_table_name</span><span class="p">;</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">tmp_table_name</span> <span class="k">ROW</span> <span class="n">FORMAT</span> <span class="n">DELIMITED</span> <span class="n">FIELDS</span> <span class="n">TERMINATED</span> <span class="k">BY</span><span class="s1">'</span><span class="se">\t</span><span class="s1">'</span>
+<span class="n">STORED</span> <span class="k">AS</span> <span class="n">TEXTFILE</span>
+<span class="k">AS</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="k">table_name</span>
+<span class="k">WHERE</span> <span class="nb">DATE</span> <span class="o">=</span> <span class="n">from_unixtime</span><span class="p">(</span><span class="n">unix_timestamp</span><span class="p">()</span><span class="o">-</span><span class="mi">24</span><span class="o">*</span><span class="mi">3600</span><span class="p">,</span><span class="s1">'yyyy-MM'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="单个-hivescript2-任务的环境配置">单个 HiveScript2 任务的环境配置</h2>
+<p>需要注意：如果你使用的 Hive 的库不是默认的 default， 假设是 xxxxx， 那么你需要在点击任务配置Button，修改HiveServer的配置
+比如修改为</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jdbc:hive2://namenode1:10000/xxxxx
+</code></pre></div></div>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li><span>07 Oct 2021</span> &raquo; <a href="/2021/10/07/Java-Exception.html">Java Exception</a></li>
+    
+      <li><span>09 Nov 2016</span> &raquo; <a href="/2016/11/09/MacOS%E5%BF%AB%E6%8D%B7%E9%94%AE%E7%9A%84%E5%BB%BA%E7%AB%8B.html">MacOS 的实用快捷键，特别针对 Win下转过来的用户</a></li>
+    
+      <li><span>31 Oct 2016</span> &raquo; <a href="/2016/10/31/%E8%A7%A3%E5%86%B3eclipse%E6%97%A0%E6%B3%95%E5%88%9B%E5%BB%BAtomcat7%E5%B7%A5%E7%A8%8B.html">解决eclipse无法创建 tomcat7 工程</a></li>
+    
+  </ul>
+</div>
+
+<!-- 多说评论框 start -->
+<div class="ds-thread" 
+data-thread-key="" 
+data-title="" 
+data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"karelpan"};
+(function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+        || document.getElementsByTagName('body')[0]).appendChild(ds);
+})();
+</script>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.4.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(function(){
+  $(document).on(‘click’, ‘#ds-thread textarea[name=message]’, function(){ $(‘#ds-sync-checkbox’).prop(‘checked’, false); });
+});
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+  <div class="footer">
+    <div class="contact">
+      <p>
+        Pan's Blog
+        <!--<br />
+        Cofounder of
+          <a href="https://codestarter.org/">Codestarter</a>,
+          <a href="https://github.com/">GitHub</a>
+        <br />-->
+        karelpan@gmail.com
+      </p>
+    </div>
+    <div class="contact">
+      <p>
+        <a href="http://github.com/karelpan/">github.com/karelpan</a><br />
+      </p>
+    </div>
+    <!--<div class="rss">
+      <a href="http://feeds.feedburner.com/tom-preston-werner">
+        <img src="/images/rss.png" alt="Subscribe to RSS Feed" />
+      </a>
+    </div>-->
+  </div>
+</div>
+
+<!--<a href="http://github.com/karelpan"><img style="position: absolute; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" /></a>-->
+
+<!-- ClickTale Bottom part -->
+<div id="ClickTaleDiv" style="display: none;"></div>
+<script type="text/javascript">
+if(document.location.protocol!='https:')
+  document.write(unescape("%3Cscript%20src='http://s.clicktale.net/WRb.js'%20type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+if(typeof ClickTale=='function') ClickTale(206,0.3,"www03");
+</script>
+<!-- ClickTale end of Bottom part -->
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-6016902-1");
+pageTracker._trackPageview();
+</script>
+<!-- Google Analytics end -->
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>Java使用org.apache.commons.lang3.time.DateUtils求时间片计数</title>
+   <title>MacOS 的实用快捷键，特别针对 Win下转过来的用户</title>
    <meta name="author" content="Tom Preston-Werner" />
    <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
    <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
@@ -32,35 +32,17 @@ var WRInitTime=(new Date()).getTime();
   </div>
 
   <div id="post">
-<h1 id="java使用orgapachecommonslang3timedateutils求时间片计数">Java使用org.apache.commons.lang3.time.DateUtils求时间片计数</h1>
+<h1 id="macos-的实用快捷键特别针对-win下转过来的用户">MacOS 的实用快捷键，特别针对 Win下转过来的用户</h1>
 
-<p class="meta">24 August 2016 - Su Zhou</p>
+<p class="meta">09 Nov 2016 - Su Zhou</p>
 
-<ul>
-  <li>求时间片样例，比如：求出一份数据中，一年内小区车辆出入的时间点分布(以小时来制作分布图，以天为分布采样基准)，进和出分别算一次记录</li>
-</ul>
+<h2 id="macos-下的">MacOS 下的</h2>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">dateMarkLsit</span> <span class="o">=</span> <span class="n">getDateMarkListFromYear</span><span class="o">(</span><span class="s">"2015"</span><span class="o">);</span>
-<span class="kt">int</span><span class="o">[]</span> <span class="n">hourFlagmentCounts</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span>
-    <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span>
-<span class="o">};</span>
-<span class="k">for</span><span class="o">(</span><span class="nc">String</span> <span class="n">dateStr</span> <span class="o">:</span> <span class="n">dateMarkList</span><span class="o">)</span> <span class="o">{</span>
-    <span class="nc">Date</span> <span class="n">date</span> <span class="o">=</span> <span class="nc">DateTimeUtil</span><span class="o">.</span><span class="na">parseDate</span><span class="o">(</span><span class="n">dateStr</span><span class="o">,</span> <span class="s">"yyyy-MM-dd HH:mm:ss.SSS"</span><span class="o">)</span>
-    <span class="c1">// range from 0 to 23 -&gt; [0,23]</span>
-    <span class="kt">long</span> <span class="n">hourFragment</span> <span class="o">=</span> <span class="nc">DateUtils</span><span class="o">.</span><span class="na">getFragmentInHours</span><span class="o">(</span><span class="n">date</span><span class="o">,</span> <span class="nc">Calendar</span><span class="o">.</span><span class="na">DATE</span><span class="o">);</span>
-    <span class="n">hourFlagmentCounts</span><span class="o">[</span><span class="n">hourFragment</span><span class="o">]++;</span>
-<span class="o">}</span>
+<p>Page-Down（光标移动） : ^ + 下箭头
+Page-Down ： fn + 下箭头</p>
 
-<span class="c1">// 将数据进行渲染</span>
-<span class="n">renderToChartUI</span><span class="o">(</span><span class="n">hourFlagmentCounts</span><span class="o">);</span>
-</code></pre></div></div>
-<p>注意： DateUtils 并不支持所有的Calendar-Fragemnt， 想知道支持的信息， 可查看对应版本的 DateUtils
-源码中方法getFragment(Calendar calendar, int fragment, int unit)的实现，可和Java核心库的Calendar类对比查看。</p>
-
+<p>Page-Up（光标移动）： ^ + 上箭头
+Page-Up： fn + 上箭头</p>
 
 </div>
 
@@ -72,7 +54,7 @@ var WRInitTime=(new Date()).getTime();
     
       <li><span>15 Nov 2016</span> &raquo; <a href="/2016/11/15/CDH-Oozie-HiveScript2.html">CDH-Oozie-HiveScript2</a></li>
     
-      <li><span>09 Nov 2016</span> &raquo; <a href="/2016/11/09/MacOS%E5%BF%AB%E6%8D%B7%E9%94%AE%E7%9A%84%E5%BB%BA%E7%AB%8B.html">MacOS 的实用快捷键，特别针对 Win下转过来的用户</a></li>
+      <li><span>31 Oct 2016</span> &raquo; <a href="/2016/10/31/%E8%A7%A3%E5%86%B3eclipse%E6%97%A0%E6%B3%95%E5%88%9B%E5%BB%BAtomcat7%E5%B7%A5%E7%A8%8B.html">解决eclipse无法创建 tomcat7 工程</a></li>
     
   </ul>
 </div>

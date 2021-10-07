@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>使用nmon作为监控工具</title>
+   <title>Hadoop 集群的一些注意点(一)</title>
    <meta name="author" content="Tom Preston-Werner" />
    <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
    <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
@@ -32,15 +32,21 @@ var WRInitTime=(new Date()).getTime();
   </div>
 
   <div id="post">
-<h1 id="使用nmon作为监控工具">使用nmon作为监控工具</h1>
+<h1 id="hadoop-集群的一些注意点一">Hadoop 集群的一些注意点(一)</h1>
 
-<p class="meta">02 Apr 2016 - Su Zhou</p>
+<p class="meta">28 August 2016 - Su Zhou</p>
 
-<p><a href="http://rock3.info/blog/2014/03/25/aix%E7%9B%91%E8%A7%86%E5%B7%A5%E5%85%B7-nmon%E5%92%8Ctopas/">http://rock3.info/blog/2014/03/25/aix%E7%9B%91%E8%A7%86%E5%B7%A5%E5%85%B7-nmon%E5%92%8Ctopas/</a>
-上面是一篇介绍 nmon 的文章</p>
+<h1 id="硬件网络">硬件网络</h1>
+<ul>
+  <li>小规模集群，所有主机需要能够支持运行1GB的网卡，而且这些主机通过网卡链接到单个优质交换机上。</li>
+  <li>大规模的集群中，则需要史依弘10GB的TOR(top-of-rank)交换机，这种交换机是至少有多个1GB链路的双中心交换机。</li>
+</ul>
 
-<p>nmon的官网地址<a href="http://nmon.sourceforge.net/pmwiki.php">http://nmon.sourceforge.net/pmwiki.php</a>
-AIX团队出品</p>
+<h1 id="hive-使用">Hive 使用</h1>
+<ul>
+  <li>hive
+默认采用动态分区，这种模式一般情况下是ok的，但是如果你的任务数据量很大，有可能会造成分区数太多，最后namenode在读取datanode时，出现所有datanode的文件操作线程句柄全满，导致任务不断报错，最后namenode重试多次后task failed；这种情况可以通过两种方式解决，增加机器和datanode 节点， 减少分区数（比如按照某个字段进行分区）。</li>
+</ul>
 
 
 </div>
@@ -48,12 +54,6 @@ AIX团队出品</p>
 <div id="related">
   <h2>Related Posts</h2>
   <ul class="posts">
-    
-      <li><span>07 Oct 2021</span> &raquo; <a href="/2021/10/07/Java-Exception.html">Java Exception</a></li>
-    
-      <li><span>15 Nov 2016</span> &raquo; <a href="/2016/11/15/CDH-Oozie-HiveScript2.html">CDH-Oozie-HiveScript2</a></li>
-    
-      <li><span>09 Nov 2016</span> &raquo; <a href="/2016/11/09/MacOS%E5%BF%AB%E6%8D%B7%E9%94%AE%E7%9A%84%E5%BB%BA%E7%AB%8B.html">MacOS 的实用快捷键，特别针对 Win下转过来的用户</a></li>
     
   </ul>
 </div>
