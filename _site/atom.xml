@@ -4,7 +4,7 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2021-10-07T23:14:47+08:00</updated>
+ <updated>2021-10-08T20:30:08+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
@@ -19,7 +19,7 @@
    <id>http://karelpan.github.io/2021/10/07/Java Exception</id>
    <content type="html">&lt;h1 id=&quot;java-exception&quot;&gt;Java Exception&lt;/h1&gt;
 
-&lt;h1 id=&quot;use-exceptions-only-for-exceptional-conditions&quot;&gt;Use exceptions only for exceptional conditions&lt;/h1&gt;
+&lt;h1 id=&quot;item-69-use-exceptions-only-for-exceptional-conditions&quot;&gt;Item 69: Use exceptions only for exceptional conditions&lt;/h1&gt;
 &lt;p&gt;anti-patterns&lt;/p&gt;
 
 &lt;h2 id=&quot;case-1&quot;&gt;case 1&lt;/h2&gt;
@@ -31,7 +31,7 @@
 &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ArrayIndexOutOfBoundsException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
 &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;像啥都不做问题大&lt;/p&gt;
+&lt;p&gt;异常内部，什么都不做肯定是有问题的，最少应该打印一条日志&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;代码语义诡异&lt;/li&gt;
   &lt;li&gt;实现不可靠，因为没有Jdk开发者保证下一个版本这行代码的行为是一致的&lt;/li&gt;
@@ -43,18 +43,114 @@
 &lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Mountain&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
        &lt;span class=&quot;n&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;climb&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;很明显，根本就不存在越界问题；其次，代码的语义明确；再者，因pattern固定，jvm实现者可以为这种pattern做专门优化&lt;/p&gt;
+&lt;p&gt;比较明显，根本就不存在越界问题；其次，代码的语义明确；再者，因pattern固定，jvm实现者可为这种pattern做专门优化；故，此为佳选。&lt;/p&gt;
 
-&lt;p&gt;这里额外讲一点，上次的读书会中，我提到 使用  xxx.forEach()  的性能会比  for-each 差一些，这个虽然是事实，&lt;/p&gt;
+&lt;p&gt;PS： 上次的读书会中，我提到使用  xxx.forEach()  的性能会比  for-each 差一些，这个和版本有关系，虽然在Jdk8下是事实，但却不那么重要&lt;/p&gt;
 &lt;ul&gt;
-  &lt;li&gt;但是 xxx.forEach() 在目前jdk8 下仅仅比 for-each 稍慢一点点而已&lt;/li&gt;
-  &lt;li&gt;当你在 xxx.forEach() 的闭包中操作的都是 immutable 对象，那当然是首推使用 xxx.forEach()，因为直观而简洁，而且因为强约束了 immutable 对象，反而更安全； 反之，使用 for-each 就行&lt;/li&gt;
+  &lt;li&gt;xxx.forEach() 在目前jdk8 下仅仅比 for-each 稍慢一点点而已，慢 1/4 不到&lt;/li&gt;
+  &lt;li&gt;当你在 xxx.forEach() 的闭包中操作的都是 immutable 对象，当然首推使用 xxx.forEach()，不仅直观而简洁，而且因强约束了 immutable 对象，反而更安全； 反之，使用 for-each 就行&lt;/li&gt;
   &lt;li&gt;传统的 fori 性能是相对最慢的，当然 fori 的好处是最灵活。
-这完全可以自行 coding 去测试 （最新的 jdk8）&lt;/li&gt;
+这完全可以自行 coding 去测试 （最新的 jdk8， 在最新的 jdk 中如何尚未测过）&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&quot;case-2&quot;&gt;case 2&lt;/h2&gt;
+&lt;p&gt;good&lt;/p&gt;
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Iterator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;collection&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;iterator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;hasNext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nc&quot;&gt;Foo&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;foo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;next&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;//...&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
+&lt;p&gt;bad (// Do not use this hideous code for iteration over a collection!)&lt;/p&gt;
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nc&quot;&gt;Iterator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;collection&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;iterator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;nc&quot;&gt;Foo&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;foo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;next&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;NoSuchElementException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;item-70-use-checked-exceptions-for-recover-able-conditions-and-runtime-exceptions-for-programming-errors&quot;&gt;Item 70: Use checked exceptions for recover able conditions and runtime exceptions for programming errors&lt;/h1&gt;
+&lt;p&gt;Checked exceptions 主要用在可以预期的，并且设计目的是调用者必须要处理的，调用者有义务应该知道怎么处理此种异常的情况下。
+Runtime exceptions 主要用来指出编程错误&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/20211007_java_exceptoin/java_exception_tree_20211008110012.jpg&quot; alt=&quot;Java Exception Design&quot; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;item-71-avoid-unnecessary-use-of-checked-exceptions&quot;&gt;Item 71: Avoid unnecessary use of checked exceptions&lt;/h1&gt;
+&lt;h2 id=&quot;how-to-use-checked-exceptions&quot;&gt;How to use Checked exceptions&lt;/h2&gt;
+&lt;p&gt;强迫程序员处理异常，可以提高代码的可读性和安全性。&lt;br /&gt;
+但是使用 Checked exceptions 也有合理性的要求&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;如果使用者按照正确方式使用 API，但却无法阻止某种已知的Exception 产生&lt;/li&gt;
+  &lt;li&gt;在这种已知的Exception 产生后，使用此API 的程序员可以立即采取有用的动作，处理这种异常
+那么这种情况下使用 Checked exceptions 就是非常合理的。
+    &lt;h2 id=&quot;avoid-checked-exeptions&quot;&gt;Avoid Checked exeptions&lt;/h2&gt;
+    &lt;p&gt;除了上述的情况外，其他情况下推荐的还是 unchecked exception 
+在 java stream api 中，解决 checked exception 的最简单的方法就是返回 result 的一个 Optional；但是返回0长度的Optional却不会带有额外的info，而使用 exception 却会带有导致这个问题发生的原因信息。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;所以我们可以使用进一步，把 throw exception 的 method 分成 2 个 method， 比如 actionPermitted() , action()&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;actionPermitted() 返回一个 boolean，表示是否该抛出异常&lt;/li&gt;
+  &lt;li&gt;action() 就是正常流程代码
+    &lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// Invocation with state-testing method and unchecked exception&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;actionPermitted&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Handle exceptional condition&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;item-72-favor-the-use-of-standard-exceptions&quot;&gt;Item 72: Favor the use of standard exceptions&lt;/h2&gt;
+&lt;p&gt;专家级程序员与缺乏经验的程序员的区别，专家追求高度代码重用（通常也有能力自己做到这种水平）。 这条通用规则同样适用于异常处理。
+关注：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;IllegalArgumentException 调用参数值不合适，该见面了&lt;/li&gt;
+  &lt;li&gt;IllegalStateException 被传入和使用的对象非法时（就是state 不正常时），该见面了&lt;/li&gt;
+  &lt;li&gt;NullPointerException 在不该出现null的地方出现了null，该见面了&lt;/li&gt;
+  &lt;li&gt;IndexOutOfBoundsException 下标越界，该见面了&lt;/li&gt;
+  &lt;li&gt;ConcurrentModificationException 应该单线程使用或同步排队调用的对象，在被并发修改，该见面了&lt;/li&gt;
+  &lt;li&gt;UnsupportedOperationException 对象不支持所请求的操作，该见面了&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;不要直接重用 Exception, RuntimeException, Throwable, or Error
+太一般化的类型，无法提供足够的可预期的信息&lt;/p&gt;
+
+&lt;h2 id=&quot;item-73-throw-exceptions-appropriate-to-the-abstraction&quot;&gt;Item 73: Throw exceptions appropriate to the abstraction&lt;/h2&gt;
+&lt;p&gt;更高层的实现应该捕获下层的异常，同时抛出可以按照高层抽象后进行解释的异常。
+比如 SpringMVC 中我们返回错误码的 一种方案，就是按照抽象后定义的高层 异常，转化成错误码，返回。&lt;/p&gt;
+
+&lt;p&gt;使用 exception chaining 有助于在高层的exception下，可以获取下层exception 的信息；&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;有助于调试&lt;/li&gt;
+  &lt;li&gt;有助于日志记录，帮助定位错误&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;item-74-document-all-exceptions-thrown-by-each-method&quot;&gt;Item 74: Document all exceptions thrown by each method&lt;/h2&gt;
+&lt;p&gt;这个是一般写代码的时候常常被忽视的，但是可以查看 框架代码的文档，依葫芦画瓢就对了，
+这点不是技术问题，而是要求人自我“反懒惰”的去做事，其实比较难坚持，但对于后续维护和别人使用你的方法等等，都大有裨益，体现在&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;开始就知道会出什么问题，可以提早设计防范策略&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;item-75-include-failure-capture-information-in-detail-messages&quot;&gt;Item 75: Include failure-capture information in detail messages&lt;/h2&gt;
+&lt;p&gt;包含对debug 和错误定位有用的所有非敏感信息，比如参数等等的，但是不要多，恰到好处就行，比如你一般不需要把完整的流水信息全部打印出来。&lt;/p&gt;
+
+&lt;h2 id=&quot;item-76-strive-for-failure-atomicity&quot;&gt;Item 76: Strive for failure atomicity&lt;/h2&gt;
+&lt;p&gt;这里的 failure atomicity 指的是， 失败的方法调用应该使对象保持在被调用之前的状态&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;immutable 对象&lt;/li&gt;
+  &lt;li&gt;可变对象，则在执行其他操作之前，进行 valid 操作如参数检验云云&lt;/li&gt;
+  &lt;li&gt;调整代码计算顺序， 让可能发生问题的操作排在其他状态修改操作之前&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;item-77-dont-ignore-exceptions&quot;&gt;Item 77: Don’t ignore exceptions&lt;/h2&gt;
+&lt;p&gt;这个不赘述，之前提到过&lt;/p&gt;
 </content>
  </entry>
  
