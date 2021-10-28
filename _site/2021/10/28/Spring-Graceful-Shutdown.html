@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+   <title>Spring Graceful Shutdown</title>
+   <meta name="author" content="Tom Preston-Werner" />
+   <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
+   <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
+
+   <!-- syntax highlighting CSS -->
+   <link rel="stylesheet" href="/css/syntax.css" type="text/css" />
+
+   <!-- Homepage CSS -->
+   <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection" />
+
+   <!-- Typekit -->
+   <script type="text/javascript" src="http://use.typekit.com/jpd0pfm.js"></script>
+   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+<body>
+
+<!-- ClickTale Top part -->
+<script type="text/javascript">
+var WRInitTime=(new Date()).getTime();
+</script>
+<!-- ClickTale end of Top part -->
+
+<div class="site">
+  <div class="title">
+    <a href="/">Pan's Blog</a>
+    <a class="extra" href="/">home</a>
+  </div>
+
+  <div id="post">
+<h1 id="spring-graceful-shutdown">Spring Graceful Shutdown</h1>
+
+<p>优雅停机是指在停止应用时，执行的一系列保证应用正常关闭的操作。这些操作往往包括等待已有请求执行完成、关闭线程、关闭连接和释放资源等，优雅停机可以避免非正常关闭程序可能造成数据异常或丢失，应用异常等问题。优雅停机本质上是JVM即将关闭前执行的一些额外的处理代码。</p>
+
+<p>一般来说，优雅停机主要处理</p>
+<ul>
+  <li>池化资源的释放：数据库连接池，HTTP 连接池</li>
+  <li>在处理线程的释放：已经被连接的HTTP请求</li>
+  <li>隐形受影响的资源的处理：Akka 的 Actor 的关闭等</li>
+</ul>
+
+<h1 id="jvm-中的实现">JVM 中的实现</h1>
+<p>编程语言都会提供监听当前线程终结的函数，比如在Java中，我们可以通过如下操作监听我们的退出事件：</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+
+        <span class="nc">Runtime</span><span class="o">.</span><span class="na">getRuntime</span><span class="o">().</span><span class="na">addShutdownHook</span><span class="o">(</span><span class="k">new</span> <span class="nc">ExitHook</span><span class="o">());</span>
+
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Do something, will exit"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">class</span> <span class="nc">ExitHook</span> <span class="kd">extends</span> <span class="nc">Thread</span><span class="o">{</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"exiting. clear resources..."</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>我们会得到如下的结果：</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Do something, will exit
+exiting. clear resources...
+
+</code></pre></div></div>
+
+<p>那么实际情况下我们如何实现优雅停机呢，以Linux 为例，我们告诉 OS 给程序对应的 pid 发送一个 kill -15 消息</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># like this,  non-violence process shutdown</span>
+<span class="nb">kill</span> <span class="nt">-15</span> pid
+</code></pre></div></div>
+
+<p>但是不能够使用 kill -9，因为这个告诉操作系统直接杀死 pid 对应的 process，好比强行断电，就没有任何进行优雅停机的机会了。</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># only use this after graceful shutdown timeout</span>
+<span class="nb">kill</span> <span class="nt">-9</span> pid
+</code></pre></div></div>
+
+<h1 id="spring-的-graceful-shutdown-pattern">Spring 的 Graceful shutdown Pattern</h1>
+<p>Spring 是一个 IOC 容器，他能够管理的是收到其托管的对象，因此需要定义托管对象的 dispose 函数才能够被 Spring 在退出时释放<br />
+那么，在 Spring 中 DisposableBean 接口就是用来表示这个类是支持 graceful dispose 的，而对应的我们就应该实现这个接口定义的 destory() 方法–用来释放当前 bean 占用的资源，包括线程池、IO、堆外内存（如果你用了一些unsafe对象方法）等。</p>
+
+<ul>
+  <li>Spring 需要知道 Runtime 在退出</li>
+  <li>Spring 知道需要释放哪些资源</li>
+  <li>Spring 需要知道如何释放资源</li>
+</ul>
+
+<p>因为 Spring 版本繁杂，以 org.springframework.boot:2.1.xx.RELEASE 版本分析为例。</p>
+
+<h2 id="spring-的-runtime-hook">Spring 的 Runtime Hook</h2>
+<p>Spring 的 graceful shutdown 同样依赖于 JVM 的 Shuthook，可见 org.springframework.context.support.AbstractApplicationContext#registerShutdownHook</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">registerShutdownHook</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">shutdownHook</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// No shutdown hook registered yet.</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">shutdownHook</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Thread</span><span class="o">()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                <span class="kd">synchronized</span> <span class="o">(</span><span class="n">startupShutdownMonitor</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">doClose</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">};</span>
+        <span class="nc">Runtime</span><span class="o">.</span><span class="na">getRuntime</span><span class="o">().</span><span class="na">addShutdownHook</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">shutdownHook</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="spring-知道需要释放哪些资源">Spring 知道需要释放哪些资源</h2>
+<p>Spring Bean Lifecycle
+<img src="/images/20211028_spring_graceful_shutdown/spring_bean_lifecycle.png" alt="Spring Bean Lifecycle" /></p>
+
+<p>可以看到，当 Spring Context 销毁的时候，会调用 destroy() 函数</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// org.springframework.context.support.AbstractApplicationContext#destroy</span>
+<span class="nd">@Deprecated</span> <span class="c1">//Spring 5 即将废弃</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">close</span><span class="o">();</span>
+<span class="o">}</span>
+
+<span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">close</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">startupShutdownMonitor</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">doClose</span><span class="o">();</span>
+        <span class="c1">// If we registered a JVM shutdown hook, we don't need it anymore now:</span>
+        <span class="c1">// We've already explicitly closed the context.</span>
+        <span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">shutdownHook</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">try</span> <span class="o">{</span>
+                <span class="nc">Runtime</span><span class="o">.</span><span class="na">getRuntime</span><span class="o">().</span><span class="na">removeShutdownHook</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">shutdownHook</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="k">catch</span> <span class="o">(</span><span class="nc">IllegalStateException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+                <span class="c1">// ignore - VM is already shutting down</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>… tobe continue</p>
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li><span>11 Oct 2021</span> &raquo; <a href="/2021/10/11/IBSN978-7-121-37972-7-%E7%BA%BF%E7%A8%8B%E7%9A%84%E4%BC%98%E9%9B%85%E5%85%B3%E9%97%AD.html">线程的优雅关闭(thread graceful shutdown)</a></li>
+    
+      <li><span>08 Oct 2021</span> &raquo; <a href="/2021/10/08/%E9%AB%98%E7%BA%A7CPU%E8%AE%BE%E8%AE%A1.html">高级CPU设计</a></li>
+    
+      <li><span>07 Oct 2021</span> &raquo; <a href="/2021/10/07/Java-Exception.html">Java Exception</a></li>
+    
+  </ul>
+</div>
+
+<!-- 多说评论框 start -->
+<div class="ds-thread" 
+data-thread-key="" 
+data-title="" 
+data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"karelpan"};
+(function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+        || document.getElementsByTagName('body')[0]).appendChild(ds);
+})();
+</script>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.4.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(function(){
+  $(document).on(‘click’, ‘#ds-thread textarea[name=message]’, function(){ $(‘#ds-sync-checkbox’).prop(‘checked’, false); });
+});
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+  <div class="footer">
+    <div class="contact">
+      <p>
+        Pan's Blog
+        <!--<br />
+        Cofounder of
+          <a href="https://codestarter.org/">Codestarter</a>,
+          <a href="https://github.com/">GitHub</a>
+        <br />-->
+        karelpan@gmail.com
+      </p>
+    </div>
+    <div class="contact">
+      <p>
+        <a href="http://github.com/karelpan/">github.com/karelpan</a><br />
+      </p>
+    </div>
+    <!--<div class="rss">
+      <a href="http://feeds.feedburner.com/tom-preston-werner">
+        <img src="/images/rss.png" alt="Subscribe to RSS Feed" />
+      </a>
+    </div>-->
+  </div>
+</div>
+
+<!--<a href="http://github.com/karelpan"><img style="position: absolute; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" /></a>-->
+
+<!-- ClickTale Bottom part -->
+<div id="ClickTaleDiv" style="display: none;"></div>
+<script type="text/javascript">
+if(document.location.protocol!='https:')
+  document.write(unescape("%3Cscript%20src='http://s.clicktale.net/WRb.js'%20type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+if(typeof ClickTale=='function') ClickTale(206,0.3,"www03");
+</script>
+<!-- ClickTale end of Bottom part -->
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-6016902-1");
+pageTracker._trackPageview();
+</script>
+<!-- Google Analytics end -->
+
+</body>
+</html>

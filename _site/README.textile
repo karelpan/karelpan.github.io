@@ -2,3 +2,10 @@ h1. tone for a programmer
 
 All is my balabala...  So read it free, and read it with no encouragement. 
 You can catch anything you think is useful. 
+
+
+# local debug
+bundle exec jekyll serve 
+
+# local build
+bundle install 
