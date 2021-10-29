@@ -4,7 +4,7 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2021-10-29T15:27:29+08:00</updated>
+ <updated>2021-10-29T15:46:49+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
@@ -263,7 +263,16 @@ exiting. clear resources...
 &lt;h1 id=&quot;最-pure-的测试方式&quot;&gt;最 Pure 的测试方式&lt;/h1&gt;
 &lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;java&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;jar&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xxxxx&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xxxx&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;jar&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;此时这个程序是前台程序，console 输出中可以看到完整的log，此时 shell 的输入输出也被binding在 jvm 进程所对应的这个标准输入输出， 此时要触发 SIGNAL 15 只需要 Ctrl + C 即可， 可以通过日志看到关闭流程。&lt;/p&gt;
+&lt;p&gt;此时这个程序是前台程序，console 输出中可以看到完整的log，此时 shell 的输入输出也被binding在 jvm 进程所对应的这个标准输入输出， 此时只要触发 SIGNAL 2 只需要 Ctrl + C 即可， 可以通过日志看到关闭流程。&lt;/p&gt;
+
+&lt;h2 id=&quot;会触发-jvm-shutdown-hook-的-os-信号&quot;&gt;会触发 jvm shutdown hook 的 OS 信号&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;SIGINT   2       中断&lt;/li&gt;
+  &lt;li&gt;SIGTERM  15      终止信号
+上面两个信号会触发  shutdownHook&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;而 SIGKILL  9  kill信号  是强制执行， 此 signal 不能被对应被 kill 的 process 忽略、处理和阻塞&lt;/p&gt;
 </content>
  </entry>
  
