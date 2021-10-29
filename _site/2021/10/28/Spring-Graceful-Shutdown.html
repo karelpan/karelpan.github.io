@@ -137,7 +137,140 @@ exiting. clear resources...
     <span class="o">}</span>
 <span class="o">}</span>
 </code></pre></div></div>
-<p>… tobe continue</p>
+
+<p>定位到最终的释放资源的地方是 org.springframework.context.support.AbstractApplicationContext#doClose 函数，下面分析一下。</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">doClose</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nc">LiveBeansView</span><span class="o">.</span><span class="na">unregisterApplicationContext</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="c1">// Publish shutdown event.</span>
+        <span class="n">publishEvent</span><span class="o">(</span><span class="k">new</span> <span class="nc">ContextClosedEvent</span><span class="o">(</span><span class="k">this</span><span class="o">));</span> <span class="c1">// 1</span>
+    <span class="o">}</span>
+    <span class="c1">// Stop all Lifecycle beans, to avoid delays during individual destruction.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">lifecycleProcessor</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="k">this</span><span class="o">.</span><span class="na">lifecycleProcessor</span><span class="o">.</span><span class="na">onClose</span><span class="o">();</span> <span class="c1">// 2</span>
+        <span class="o">}</span>
+        <span class="k">catch</span> <span class="o">(</span><span class="nc">Throwable</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">"Exception thrown from LifecycleProcessor on context close"</span><span class="o">,</span> <span class="n">ex</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Destroy all cached singletons in the context's BeanFactory.</span>
+    <span class="n">destroyBeans</span><span class="o">();</span> <span class="c1">// 3</span>
+
+    <span class="c1">// Close the state of this context itself.</span>
+    <span class="n">closeBeanFactory</span><span class="o">();</span> <span class="c1">// 4</span>
+
+    <span class="c1">// Let subclasses do some final clean-up if they wish...</span>
+    <span class="n">onClose</span><span class="o">();</span> <span class="c1">// 5</span>
+
+    <span class="c1">// Reset local application listeners to pre-refresh state.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">earlyApplicationListeners</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">applicationListeners</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">applicationListeners</span><span class="o">.</span><span class="na">addAll</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">earlyApplicationListeners</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Switch to inactive.</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">active</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+
+<span class="o">}</span>
+</code></pre></div></div>
+<p>cut 无关的代码后，我们可以发现对于 Spring 来说，关闭的顺序是</p>
+<ol>
+  <li>发布一个关闭事件</li>
+  <li>调用生命周期处理器</li>
+  <li>销毁所有的Bean</li>
+  <li>关闭Bean工厂</li>
+  <li>调用子类的Close函数</li>
+</ol>
+
+<p>1、2 是回调，不涉及对象销毁；5 是让子类进行额外的回收动作； 容器内的 bean 的移除销毁第 3 步。</p>
+
+<p>受到 Spring 托管的对象很多，不一定所有的对象都需要销毁行为。从下面的 spring 框架代码可知，所有的需要带有自己销毁 method 的对象都实现了 DisposableBean Interface</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroySingleton</span><span class="o">(</span><span class="nc">String</span> <span class="n">beanName</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">removeSingleton</span><span class="o">(</span><span class="n">beanName</span><span class="o">);</span>
+    <span class="nc">DisposableBean</span> <span class="n">disposableBean</span><span class="o">;</span>
+    <span class="kd">synchronized</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">disposableBeans</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">disposableBean</span> <span class="o">=</span> <span class="o">(</span><span class="nc">DisposableBean</span><span class="o">)</span><span class="k">this</span><span class="o">.</span><span class="na">disposableBeans</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">beanName</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="k">this</span><span class="o">.</span><span class="na">destroyBean</span><span class="o">(</span><span class="n">beanName</span><span class="o">,</span> <span class="n">disposableBean</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>Spring 会在关闭的时候销毁这些实现了 DisposableBean Interface 类型的 Bean对象。</p>
+
+<h2 id="spring-需要知道如何释放资源">Spring 需要知道如何释放资源</h2>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">DisposableBean</span> <span class="o">{</span>
+    <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>实现此方法，Spring会在销毁对象的时候，自动调用</p>
+
+<h2 id="组合在一起">组合在一起</h2>
+<p>Spring Web Server 是如何优雅的停机的</p>
+<ul>
+  <li>Web Server内部的资源都是 DisposableBean，并且受 Spring 托管</li>
+</ul>
+
+<p>举个例子，比如数据库的资源 <code class="language-plaintext highlighter-rouge">org.springframework.orm.jpa.AbstractEntityManagerFactoryBean#destroy</code> 在销毁的阶段会将 Entity 对象进行销毁。</p>
+
+<p>对于收到 Spring 托管的对象的优雅停机的路径是：</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Runtine Shutdown Hook -&gt; Context:destory() -&gt; DisposableBean:destroy()
+</code></pre></div></div>
+<p>对于大部分的资源比如数据库，服务发现，等等都是这样的销毁方式。</p>
+
+<h1 id="web-容器">Web 容器</h1>
+<h2 id="q1普通的-bean-的销毁我们已然了解那么-web-server-呢">Q1：普通的 bean 的销毁我们已然了解，那么 web server 呢？</h2>
+<p>Web Server 并不是在 destroySingleton 阶段进行销毁的</p>
+
+<p>除了销毁Beans 之外，还有最后一个 close() 函数可以调用，对于 Tomcat 等这些 web容器来说，本身是作为 ApplicationContext 的一个实现，并非为Spring Bean 一部分（Spring 本身是一个 Servlet，托管于 Tomcat 这样的 Servlet 容器）</p>
+
+<p>对于 Spring 而言，可以调用 <code class="language-plaintext highlighter-rouge">org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext</code> 的 close() 函数来告诉 Tomcat 开始关闭</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onClose</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">onClose</span><span class="o">();</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">stopAndReleaseWebServer</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="q2-如果一个-web-服务已经触发了-shutdown-动作后-此时还可以接受请求吗">Q2: 如果一个 web 服务已经触发了 Shutdown 动作后， 此时还可以接受请求吗？</h2>
+<ul>
+  <li>在老版本的 Tomcat 比如 8 内是不支持的（在9.0.33+的 tomcat 配合 spring-boot-2-3-0+ 可以提供默认支持）， 我们实际上是无法获得正确的返回的。
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>+------------------+          +---------------------------+         +--------------------------------------+
+|   controller     |          |       services            |         |               dao                    |
+|                  +---------&gt;+                           +---------&gt;                                      |
+|                  |          |                           | 2. Query DB                          Entitymanger
++------------------+          +---------------------------+         +---------------------------------^----+
+                                                                                                    |
+                                                                                                    |
+                                                                                                    |
+                               +--------------------------------------+                             |1. destory()
+                               |                                      |                             |
+                               |    Destory                           +-----------------------------+
+                               |                                      |
+                               +--------------------------------------+
+</code></pre></div>    </div>
+    <p>但是我们可以通过，添加 静态状态维护类，并使用内存强同步语义的变量来标识，已经进入 Shutdown hook， 通过 controller 的 AOP Before 切面拦截，阻止后续请求并直接 failed</p>
+  </li>
+</ul>
+
+<h1 id="q3-如果仅仅使用-haproxy-这样的均衡器时想要及时发现已经不服务的系统如何做">Q3: 如果仅仅使用 haproxy 这样的均衡器时，想要及时发现已经不服务的系统，如何做？</h1>
+<p>对于 一个已经进入 shutdown 流程的 Spring 管理的 web 应用。</p>
+<ol>
+  <li>首先 haproxy 和对应的 web app ，本身应该有 健康检查这样的机制， 一般为一个仅有head 数据的请求</li>
+  <li>在 web app 触发了 shutdown 后， 给予 Q2 中的的切面拦截的方法，应让 健康检查的接口直接返回快速失败，那么 haproxy 就知道应该从转发列表中摘除此 node （直到其健康检查接口重新正确返回–指的就是服务重新正确服务）</li>
+</ol>
+
+<h1 id="q4-如果我希望在触发了-shutdown-操作后-已经接受的请求优先处理完后再进行后续的-graceful-shutdown假设在-spring-内部如何做呢">Q4: 如果我希望，在触发了 shutdown 操作后， 已经接受的请求优先处理完后，再进行后续的 graceful shutdown，假设在 spring 内部如何做呢？</h1>
+<ol>
+  <li>实现自己 EmbeddedWebApplicationContext ，比如 实现一个  <code class="language-plaintext highlighter-rouge">GracefulShutdownGenericWebApplicatonContext implements EmbeddedWebApplicationContext</code></li>
+  <li>实现自己的 doClose() 方法，在未处理完任务前，不关闭 web server</li>
+  <li>在创建 Spring 上下文的时候，使用这个 <code class="language-plaintext highlighter-rouge">GracefulShutdownGenericWebApplicatonContext.class</code></li>
+  <li>对于有自定义销毁流程的 bean 实现 SmartLifecycle ，比如实现(我随便命名了)一个 <code class="language-plaintext highlighter-rouge">ActorSystemSmartLifecycle implements SmartLifecycle</code> , 通过设置 phase 来设置优先级</li>
+  <li>在启动 Spring 创建好对应的 SmartLifecycle 的 Bean</li>
+  <li></li>
+</ol>
+
 
 </div>
 
