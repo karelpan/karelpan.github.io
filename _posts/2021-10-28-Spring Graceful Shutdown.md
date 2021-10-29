@@ -265,3 +265,8 @@ java -jar xxxxx-xxxx.jar
 
 
 而 SIGKILL  9  kill信号  是强制执行， 此 signal 不能被对应被 kill 的 process 忽略、处理和阻塞
+
+PS:
+1. [Advanced CPU Designs](https://www.bilibili.com/video/BV12t411F7mP?p=1)
+2. [Early Programming](https://www.bilibili.com/video/BV12t411F7mP?p=2)
+3. [IC & Moore's law](https://www.bilibili.com/video/BV12t411F7mP?p=9)

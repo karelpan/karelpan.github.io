@@ -4,7 +4,7 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2021-10-29T15:46:49+08:00</updated>
+ <updated>2021-10-29T16:01:04+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
@@ -273,6 +273,13 @@ exiting. clear resources...
 &lt;/ul&gt;
 
 &lt;p&gt;而 SIGKILL  9  kill信号  是强制执行， 此 signal 不能被对应被 kill 的 process 忽略、处理和阻塞&lt;/p&gt;
+
+&lt;p&gt;PS:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.bilibili.com/video/BV12t411F7mP?p=1&quot;&gt;Advanced CPU Designs&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.bilibili.com/video/BV12t411F7mP?p=2&quot;&gt;Early Programming&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.bilibili.com/video/BV12t411F7mP?p=9&quot;&gt;IC &amp;amp; Moore’s law&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
 </content>
  </entry>
  
