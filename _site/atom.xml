@@ -4,7 +4,7 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2021-10-29T16:08:38+08:00</updated>
+ <updated>2021-10-29T16:35:18+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
@@ -206,6 +206,7 @@ exiting. clear resources...
 &lt;p&gt;对于大部分的资源比如数据库，服务发现，等等都是这样的销毁方式。&lt;/p&gt;
 
 &lt;h1 id=&quot;web-容器&quot;&gt;Web 容器&lt;/h1&gt;
+
 &lt;h2 id=&quot;q1普通的-bean-的销毁我们已然了解那么-web-server-呢&quot;&gt;Q1：普通的 bean 的销毁我们已然了解，那么 web server 呢？&lt;/h2&gt;
 &lt;p&gt;Web Server 并不是在 destroySingleton 阶段进行销毁的&lt;/p&gt;
 
