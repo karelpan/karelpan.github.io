@@ -268,9 +268,17 @@ exiting. clear resources...
   <li>在创建 Spring 上下文的时候，使用这个 <code class="language-plaintext highlighter-rouge">GracefulShutdownGenericWebApplicatonContext.class</code></li>
   <li>对于有自定义销毁流程的 bean 实现 SmartLifecycle ，比如实现(我随便命名了)一个 <code class="language-plaintext highlighter-rouge">ActorSystemSmartLifecycle implements SmartLifecycle</code> , 通过设置 phase 来设置优先级</li>
   <li>在启动 Spring 创建好对应的 SmartLifecycle 的 Bean</li>
-  <li></li>
 </ol>
 
+<h1 id="在-docker-容器中-java程序的-gracelful-shutdown">在 Docker 容器中 Java程序的 gracelful shutdown</h1>
+<p>docker stop 加上一个 timeout 命令默认触发的是 SIGNAL 15（KILL -15）， 待超时后才会触发 SIGNAL 9 (KILL -9) 强制杀死 docker 中 pid 为 1 的进程</p>
+
+<p>那么这个 SIGNAL 会被 docker 内的 vm 讲信号转发给 pid 为 1 的 jvm 进程， 由于 springboot(tomcat + spring)  默认注册了 shutdownHook， 那么就会触发这个回调，开始执行关闭流程</p>
+
+<h1 id="最-pure-的测试方式">最 Pure 的测试方式</h1>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">java</span> <span class="o">-</span><span class="n">jar</span> <span class="n">xxxxx</span><span class="o">-</span><span class="n">xxxx</span><span class="o">.</span><span class="na">jar</span>
+</code></pre></div></div>
+<p>此时这个程序是前台程序，console 输出中可以看到完整的log，此时 shell 的输入输出也被binding在 jvm 进程所对应的这个标准输入输出， 此时要触发 SIGNAL 15 只需要 Ctrl + C 即可， 可以通过日志看到关闭流程。</p>
 
 </div>
 

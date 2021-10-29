@@ -4,7 +4,7 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2021-10-29T15:17:49+08:00</updated>
+ <updated>2021-10-29T15:27:29+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
@@ -253,9 +253,17 @@ exiting. clear resources...
   &lt;li&gt;在创建 Spring 上下文的时候，使用这个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;GracefulShutdownGenericWebApplicatonContext.class&lt;/code&gt;&lt;/li&gt;
   &lt;li&gt;对于有自定义销毁流程的 bean 实现 SmartLifecycle ，比如实现(我随便命名了)一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ActorSystemSmartLifecycle implements SmartLifecycle&lt;/code&gt; , 通过设置 phase 来设置优先级&lt;/li&gt;
   &lt;li&gt;在启动 Spring 创建好对应的 SmartLifecycle 的 Bean&lt;/li&gt;
-  &lt;li&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
+&lt;h1 id=&quot;在-docker-容器中-java程序的-gracelful-shutdown&quot;&gt;在 Docker 容器中 Java程序的 gracelful shutdown&lt;/h1&gt;
+&lt;p&gt;docker stop 加上一个 timeout 命令默认触发的是 SIGNAL 15（KILL -15）， 待超时后才会触发 SIGNAL 9 (KILL -9) 强制杀死 docker 中 pid 为 1 的进程&lt;/p&gt;
+
+&lt;p&gt;那么这个 SIGNAL 会被 docker 内的 vm 讲信号转发给 pid 为 1 的 jvm 进程， 由于 springboot(tomcat + spring)  默认注册了 shutdownHook， 那么就会触发这个回调，开始执行关闭流程&lt;/p&gt;
+
+&lt;h1 id=&quot;最-pure-的测试方式&quot;&gt;最 Pure 的测试方式&lt;/h1&gt;
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;java&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;jar&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xxxxx&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xxxx&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;jar&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;此时这个程序是前台程序，console 输出中可以看到完整的log，此时 shell 的输入输出也被binding在 jvm 进程所对应的这个标准输入输出， 此时要触发 SIGNAL 15 只需要 Ctrl + C 即可， 可以通过日志看到关闭流程。&lt;/p&gt;
 </content>
  </entry>
  
