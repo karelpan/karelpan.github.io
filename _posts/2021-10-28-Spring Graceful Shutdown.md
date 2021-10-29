@@ -243,8 +243,16 @@ protected void onClose() {
 3. 在创建 Spring 上下文的时候，使用这个 ```GracefulShutdownGenericWebApplicatonContext.class```
 4. 对于有自定义销毁流程的 bean 实现 SmartLifecycle ，比如实现(我随便命名了)一个 ```ActorSystemSmartLifecycle implements SmartLifecycle``` , 通过设置 phase 来设置优先级
 5. 在启动 Spring 创建好对应的 SmartLifecycle 的 Bean 
-6. 
+
+
+# 在 Docker 容器中 Java程序的 gracelful shutdown 
+docker stop 加上一个 timeout 命令默认触发的是 SIGNAL 15（KILL -15）， 待超时后才会触发 SIGNAL 9 (KILL -9) 强制杀死 docker 中 pid 为 1 的进程
+
+那么这个 SIGNAL 会被 docker 内的 vm 讲信号转发给 pid 为 1 的 jvm 进程， 由于 springboot(tomcat + spring)  默认注册了 shutdownHook， 那么就会触发这个回调，开始执行关闭流程 
    
 
-
-
+# 最 Pure 的测试方式
+```java
+java -jar xxxxx-xxxx.jar
+```
+此时这个程序是前台程序，console 输出中可以看到完整的log，此时 shell 的输入输出也被binding在 jvm 进程所对应的这个标准输入输出， 此时要触发 SIGNAL 15 只需要 Ctrl + C 即可， 可以通过日志看到关闭流程。
