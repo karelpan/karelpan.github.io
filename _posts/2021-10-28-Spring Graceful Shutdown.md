@@ -14,6 +14,8 @@ uuid: c426188a-37f7-11ec-8f9d-6b587e584ce1
 * 在处理线程的释放：已经被连接的HTTP请求
 * 隐形受影响的资源的处理：Akka 的 Actor 的关闭等
 
+
+
 # JVM 中的实现
 编程语言都会提供监听当前线程终结的函数，比如在Java中，我们可以通过如下操作监听我们的退出事件：
 ```java
@@ -54,6 +56,8 @@ kill -15 pid
 kill -9 pid
 ```
 
+
+
 # Spring 的 Graceful shutdown Pattern
 Spring 是一个 IOC 容器，他能够管理的是收到其托管的对象，因此需要定义托管对象的 dispose 函数才能够被 Spring 在退出时释放  
 那么，在 Spring 中 DisposableBean 接口就是用来表示这个类是支持 graceful dispose 的，而对应的我们就应该实现这个接口定义的 destory() 方法--用来释放当前 bean 占用的资源，包括线程池、IO、堆外内存（如果你用了一些unsafe对象方法）等。
@@ -63,6 +67,7 @@ Spring 是一个 IOC 容器，他能够管理的是收到其托管的对象，�
 * Spring 需要知道如何释放资源
 
 因为 Spring 版本繁杂，以 org.springframework.boot:2.1.xx.RELEASE 版本分析为例。
+
 
 ## Spring 的 Runtime Hook
 Spring 的 graceful shutdown 同样依赖于 JVM 的 Shuthook，可见 org.springframework.context.support.AbstractApplicationContext#registerShutdownHook 
@@ -83,6 +88,7 @@ public void registerShutdownHook() {
     }
 }
 ```
+
 
 ## Spring 知道需要释放哪些资源
 Spring Bean Lifecycle
@@ -200,6 +206,8 @@ Runtine Shutdown Hook -> Context:destory() -> DisposableBean:destroy()
 
 
 #  Web 容器
+
+
 ## Q1：普通的 bean 的销毁我们已然了解，那么 web server 呢？
 Web Server 并不是在 destroySingleton 阶段进行销毁的
 
@@ -212,6 +220,7 @@ protected void onClose() {
     this.stopAndReleaseWebServer();
 }
 ```
+
 
 ## Q2: 如果一个 web 服务已经触发了 Shutdown 动作后， 此时还可以接受请求吗？
 * 在老版本的 Tomcat 比如 8 内是不支持的（在9.0.33+的 tomcat 配合 spring-boot-2-3-0+ 可以提供默认支持）， 我们实际上是无法获得正确的返回的。
@@ -232,10 +241,12 @@ protected void onClose() {
 ```
 但是我们可以通过，添加 静态状态维护类，并使用内存强同步语义的变量来标识，已经进入 Shutdown hook， 通过 controller 的 AOP Before 切面拦截，阻止后续请求并直接 failed
 
+
 # Q3: 如果仅仅使用 haproxy 这样的均衡器时，想要及时发现已经不服务的系统，如何做？
 对于 一个已经进入 shutdown 流程的 Spring 管理的 web 应用。 
 1. 首先 haproxy 和对应的 web app ，本身应该有 健康检查这样的机制， 一般为一个仅有head 数据的请求
 2. 在 web app 触发了 shutdown 后， 给予 Q2 中的的切面拦截的方法，应让 健康检查的接口直接返回快速失败，那么 haproxy 就知道应该从转发列表中摘除此 node （直到其健康检查接口重新正确返回--指的就是服务重新正确服务）
+
 
 # Q4: 如果我希望，在触发了 shutdown 操作后， 已经接受的请求优先处理完后，再进行后续的 graceful shutdown，假设在 spring 内部如何做呢？
 1. 实现自己 EmbeddedWebApplicationContext ，比如 实现一个  ```GracefulShutdownGenericWebApplicatonContext implements EmbeddedWebApplicationContext```
