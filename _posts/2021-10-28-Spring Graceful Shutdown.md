@@ -270,3 +270,4 @@ PS:
 1. [Advanced CPU Designs](https://www.bilibili.com/video/BV12t411F7mP?p=1)
 2. [Early Programming](https://www.bilibili.com/video/BV12t411F7mP?p=2)
 3. [IC & Moore's law](https://www.bilibili.com/video/BV12t411F7mP?p=9)
+4. [Multicore Programming](https://www.youtube.com/watch?v=dx98pqJvZVk)
