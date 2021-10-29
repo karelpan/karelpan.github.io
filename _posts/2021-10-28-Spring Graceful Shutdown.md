@@ -255,4 +255,13 @@ docker stop 加上一个 timeout 命令默认触发的是 SIGNAL 15（KILL -15�
 ```java
 java -jar xxxxx-xxxx.jar
 ```
-此时这个程序是前台程序，console 输出中可以看到完整的log，此时 shell 的输入输出也被binding在 jvm 进程所对应的这个标准输入输出， 此时要触发 SIGNAL 15 只需要 Ctrl + C 即可， 可以通过日志看到关闭流程。
+此时这个程序是前台程序，console 输出中可以看到完整的log，此时 shell 的输入输出也被binding在 jvm 进程所对应的这个标准输入输出， 此时只要触发 SIGNAL 2 只需要 Ctrl + C 即可， 可以通过日志看到关闭流程。
+
+
+## 会触发 jvm shutdown hook 的 OS 信号
+* SIGINT   2       中断
+* SIGTERM  15      终止信号
+上面两个信号会触发  shutdownHook 
+
+
+而 SIGKILL  9  kill信号  是强制执行， 此 signal 不能被对应被 kill 的 process 忽略、处理和阻塞
