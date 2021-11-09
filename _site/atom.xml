@@ -4,13 +4,30 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2021-10-29T16:35:54+08:00</updated>
+ <updated>2021-11-09T16:53:40+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
    <email>tom@mojombo.com</email>
  </author>
 
+ 
+ <entry>
+   <title>Performance and scalability in java</title>
+   <link href="http://karelpan.github.io/2021/11/09/Performance-and-scalability-in-Java.html"/>
+   <updated>2021-11-09T00:00:00+08:00</updated>
+   <id>http://karelpan.github.io/2021/11/09/Performance and scalability in Java</id>
+   <content type="html">&lt;p&gt;layout: post
+title: Performance and scalability in java concurrent programming
+uuid: 08933df4-413a-11ec-bad5-9b10d924152c
+—&lt;/p&gt;
+
+&lt;h1 id=&quot;performance-and-scalability-in-java&quot;&gt;Performance and scalability in java&lt;/h1&gt;
+
+&lt;h1 id=&quot;mind-map&quot;&gt;mind map&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&quot;/images/20211009_performance_and_scalability/mindmap.png&quot; alt=&quot;summary&quot; /&gt;&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Spring Graceful Shutdown</title>
