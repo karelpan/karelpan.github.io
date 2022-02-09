@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+   <title>使用wsl配合windows写gitpages博客</title>
+   <meta name="author" content="Tom Preston-Werner" />
+   <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
+   <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
+
+   <!-- syntax highlighting CSS -->
+   <link rel="stylesheet" href="/css/syntax.css" type="text/css" />
+
+   <!-- Homepage CSS -->
+   <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection" />
+
+   <!-- Typekit -->
+   <script type="text/javascript" src="http://use.typekit.com/jpd0pfm.js"></script>
+   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+<body>
+
+<!-- ClickTale Top part -->
+<script type="text/javascript">
+var WRInitTime=(new Date()).getTime();
+</script>
+<!-- ClickTale end of Top part -->
+
+<div class="site">
+  <div class="title">
+    <a href="/">Pan's Blog</a>
+    <a class="extra" href="/">home</a>
+  </div>
+
+  <div id="post">
+<p>layout: post
+title: 2022-02-08-使用WSL配合Windows写GitPages博客
+uuid: 78bf8738-c61c-4db9-ab57-eb547d007949
+—-</p>
+
+<h1 id="使用wsl配合windows写gitpages博客">使用wsl配合windows写gitpages博客</h1>
+
+<p>首先是安装 wsl，我选择的是 Ubuntu，在你的Windows下，Win键+ x键 可打开一个系统工具列表，选中 “PowerShell（管理员）”并鼠标点击，则会出现一个具有管理源权限的PowerShell 终端界面
+\</p>
+<ul>
+  <li>使用 “PowerShell（管理员）”，是因为操作 wsl 需要管理员权限 （本内容同样可支持 WSL1 + WSL2）
+接着在 PowerShell 命令行框中键入
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wsl <span class="nt">--install</span> <span class="nt">-d</span> Ubuntu
+</code></pre></div>    </div>
+    <p>安装完 wsl 以后，我们首先要将 apt 源更换为 aisa区的，以提高更新速度，比如你可以选用清华大学的源<br />
+接着我们安装node，首先打开 Ubuntu （直接可以在应用列表找到已经安装的 WSL Ubuntu）</p>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 在 Ubunut 的终端下安装 Node 和ruby</span>
+<span class="nb">sudo </span>apt update
+<span class="nb">sudo </span>apt upgrade <span class="nt">-y</span>
+<span class="nb">sudo </span>apt node <span class="nt">-y</span> 
+<span class="nb">sudo </span>apt npm <span class="nt">-y</span>
+<span class="nb">sudo </span>apt ruby <span class="nt">-y</span>
+<span class="nb">sudo </span>npm <span class="nb">install </span>bundler
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p>然后你需要配置好你的 GitHub 的 gitpages 用的 项目的 免登录拉git 的key，具体可以到 github 看怎么操作<br />
+接着我们需要进行拉下  gitpages，我的gitpages 使用了 jekyll</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> ~ 
+<span class="nb">mkdir</span> <span class="nt">-p</span> git/blog
+git clone git@github.com:xxx/xxx.github.io.git
+<span class="nb">cd </span>xxx.github.io
+bundle <span class="nb">install</span> <span class="nt">--path</span> vendors/bundle
+</code></pre></div></div>
+<p>等待安装完成，开始使用 jekyll 写博客吧, 下面先启动 jekyll 测试服务器</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bundle <span class="nb">exec </span>jekyll serve <span class="nt">--livereload</span>
+</code></pre></div></div>
+
+<h1 id="如何在windows-上使用-vscode-编辑呢">如何在windows 上使用 vscode 编辑呢？</h1>
+<p>安装好windows 版本的 vscode，启动编辑器，在 “文件”下选择“打开文件夹”，会立即弹出一个文件夹框；接着在文件夹框的地址栏中输入 <code class="language-plaintext highlighter-rouge">\\wsl$</code> 可以看到你的 wsl 虚拟机磁盘目录<br />
+进入直接一层层找到你在 ubunut 下设置的 blog 文件目录，比如 <code class="language-plaintext highlighter-rouge">\\wsl$\Ubuntu\home\xxxx\xxx\xxx.github.io</code></p>
+
+<p>至此 环境的配置就ok了</p>
+
+
+</div>
+
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li><span>09 Nov 2021</span> &raquo; <a href="/2021/11/09/Performance-and-scalability-in-Java.html">Performance and scalability in java</a></li>
+    
+      <li><span>28 Oct 2021</span> &raquo; <a href="/2021/10/28/Spring-Graceful-Shutdown.html">Spring Graceful Shutdown</a></li>
+    
+      <li><span>11 Oct 2021</span> &raquo; <a href="/2021/10/11/IBSN978-7-121-37972-7-%E7%BA%BF%E7%A8%8B%E7%9A%84%E4%BC%98%E9%9B%85%E5%85%B3%E9%97%AD.html">线程的优雅关闭(thread graceful shutdown)</a></li>
+    
+  </ul>
+</div>
+
+<!-- 多说评论框 start -->
+<div class="ds-thread" 
+data-thread-key="" 
+data-title="" 
+data-url=""></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"karelpan"};
+(function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+        || document.getElementsByTagName('body')[0]).appendChild(ds);
+})();
+</script>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.4.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(function(){
+  $(document).on(‘click’, ‘#ds-thread textarea[name=message]’, function(){ $(‘#ds-sync-checkbox’).prop(‘checked’, false); });
+});
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+  <div class="footer">
+    <div class="contact">
+      <p>
+        Pan's Blog
+        <!--<br />
+        Cofounder of
+          <a href="https://codestarter.org/">Codestarter</a>,
+          <a href="https://github.com/">GitHub</a>
+        <br />-->
+        karelpan@gmail.com
+      </p>
+    </div>
+    <div class="contact">
+      <p>
+        <a href="http://github.com/karelpan/">github.com/karelpan</a><br />
+      </p>
+    </div>
+    <!--<div class="rss">
+      <a href="http://feeds.feedburner.com/tom-preston-werner">
+        <img src="/images/rss.png" alt="Subscribe to RSS Feed" />
+      </a>
+    </div>-->
+  </div>
+</div>
+
+<!--<a href="http://github.com/karelpan"><img style="position: absolute; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" /></a>-->
+
+<!-- ClickTale Bottom part -->
+<div id="ClickTaleDiv" style="display: none;"></div>
+<script type="text/javascript">
+if(document.location.protocol!='https:')
+  document.write(unescape("%3Cscript%20src='http://s.clicktale.net/WRb.js'%20type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+if(typeof ClickTale=='function') ClickTale(206,0.3,"www03");
+</script>
+<!-- ClickTale end of Bottom part -->
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-6016902-1");
+pageTracker._trackPageview();
+</script>
+<!-- Google Analytics end -->
+
+</body>
+</html>
