@@ -4,7 +4,7 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2022-02-09T11:34:34+08:00</updated>
+ <updated>2022-02-10T14:13:00+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
@@ -13,17 +13,11 @@
 
  
  <entry>
-   <title>使用wsl配合windows写gitpages博客</title>
+   <title>2022-02-08-使用WSL配合Windows写GitPages博客</title>
    <link href="http://karelpan.github.io/2022/02/08/%E4%BD%BF%E7%94%A8WSL%E9%85%8D%E5%90%88Windows%E5%86%99GitPages%E5%8D%9A%E5%AE%A2.html"/>
    <updated>2022-02-08T00:00:00+08:00</updated>
    <id>http://karelpan.github.io/2022/02/08/使用WSL配合Windows写GitPages博客</id>
-   <content type="html">&lt;hr /&gt;
-&lt;p&gt;layout: post
-title: 2022-02-08-使用WSL配合Windows写GitPages博客
-uuid: 78bf8738-c61c-4db9-ab57-eb547d007949
-—-&lt;/p&gt;
-
-&lt;h1 id=&quot;使用wsl配合windows写gitpages博客&quot;&gt;使用wsl配合windows写gitpages博客&lt;/h1&gt;
+   <content type="html">&lt;h1 id=&quot;2022-02-08-使用wsl配合windows写gitpages博客&quot;&gt;2022-02-08-使用WSL配合Windows写GitPages博客&lt;/h1&gt;
 
 &lt;p&gt;首先是安装 wsl，我选择的是 Ubuntu，在你的Windows下，Win键+ x键 可打开一个系统工具列表，选中 “PowerShell（管理员）”并鼠标点击，则会出现一个具有管理源权限的PowerShell 终端界面
 \&lt;/p&gt;
