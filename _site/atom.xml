@@ -4,7 +4,7 @@
  <title>Tom Preston-Werner</title>
  <link href="http://karelpan.github.io/atom.xml" rel="self"/>
  <link href="http://karelpan.github.io/"/>
- <updated>2022-02-11T14:07:09+08:00</updated>
+ <updated>2022-02-11T14:08:30+08:00</updated>
  <id>http://karelpan.github.io/</id>
  <author>
    <name>Tom Preston-Werner</name>
@@ -41,8 +41,7 @@ WSL 安装方法在 微软官方的文档上就有，直接可以查到，这里
 &lt;p&gt;接着你可以启动 clickhouse，不过一般来说可能你的 9000 端口已经被占用，你可以修改下 clickhouse-server 的配置&lt;/p&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# 比如把 9000 端口修改成 29000 &lt;/span&gt;
-&lt;span class=&quot;nb&quot;&gt;sudo sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/&amp;lt;tcp_port&amp;gt;9000&amp;lt;\/tcp_port&amp;gt;/&amp;lt;tcp_port&amp;gt;29000&amp;lt;\/tcp_port&amp;gt;/g'&lt;/span&gt; /etc/clickhouse-server/co
-nfig.xml
+&lt;span class=&quot;nb&quot;&gt;sudo sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/&amp;lt;tcp_port&amp;gt;9000&amp;lt;\/tcp_port&amp;gt;/&amp;lt;tcp_port&amp;gt;29000&amp;lt;\/tcp_port&amp;gt;/g'&lt;/span&gt; /etc/clickhouse-server/config.xml
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;其次你可能也需要修改下你的密码&lt;/p&gt;

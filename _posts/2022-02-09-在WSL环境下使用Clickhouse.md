@@ -32,8 +32,7 @@ sudo apt-get install -y clickhouse-server clickhouse-client
 
 ```bash
 # 比如把 9000 端口修改成 29000 
-sudo sed -i 's/<tcp_port>9000<\/tcp_port>/<tcp_port>29000<\/tcp_port>/g' /etc/clickhouse-server/co
-nfig.xml
+sudo sed -i 's/<tcp_port>9000<\/tcp_port>/<tcp_port>29000<\/tcp_port>/g' /etc/clickhouse-server/config.xml
 ```
 
 其次你可能也需要修改下你的密码
