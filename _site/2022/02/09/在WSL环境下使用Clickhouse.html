@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>Performance and scalability in java concurrent programming</title>
+   <title>在WSL环境下使用Clickhouse</title>
    <meta name="author" content="Tom Preston-Werner" />
    <link href="http://feeds.feedburner.com/tom-preston-werner" rel="alternate" title="Tom Preston-Werner" type="application/atom+xml" />
    <meta name="readability-verification" content="QCzSs992GxmRYRKVpPeZ6LE2tS8aYKxsSSQKV8YM"/>
@@ -32,10 +32,46 @@ var WRInitTime=(new Date()).getTime();
   </div>
 
   <div id="post">
-<h1 id="performance-and-scalability-in-java-concurrent-programming">Performance and scalability in java concurrent programming</h1>
+<h1 id="在wsl环境下使用clickhouse">在WSL环境下使用Clickhouse</h1>
 
-<h1 id="mind-map">mind map</h1>
-<p><img src="/images/20211009_performance_and_scalability/mindmap.png" alt="summary" /></p>
+<p>在 windows 上跑 clickhouse 比较好和省力的方法是使用 WSL - Windows Subsystem For Linux<br />
+WSL 安装方法在 微软官方的文档上就有，直接可以查到，这里不赘述。<br />
+下面主要讲如何安装 clickhouse \</p>
+
+<p>首先打开已经装好的 WSL Ubuntu，在终端中开始我们的安装</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt update
+<span class="nb">sudo </span>apt upgrade <span class="nt">-y</span>
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>apt-transport-https ca-certificates dirmngr <span class="nt">-y</span>
+<span class="nb">sudo </span>apt-key adv <span class="nt">--keyserver</span> hkp://keyserver.ubuntu.com:80 <span class="nt">--recv</span> E0C56BD4
+
+<span class="c"># 如果你的网络有被墙掉，可以使用 清华大学的镜像源   </span>
+<span class="c"># "deb https://mirrors.tuna.tsinghua.edu.cn/clickhouse/deb/stable/ main/" </span>
+<span class="nb">echo</span> <span class="s2">"deb https://repo.clickhouse.com/deb/stable/ main/"</span> | <span class="nb">sudo tee</span> <span class="se">\</span>
+    /etc/apt/sources.list.d/clickhouse.list
+
+<span class="nb">sudo </span>apt-get update
+<span class="nb">sudo </span>apt-get <span class="nb">install</span> <span class="nt">-y</span> clickhouse-server clickhouse-client
+</code></pre></div></div>
+
+<p>接着你可以启动 clickhouse，不过一般来说可能你的 9000 端口已经被占用，你可以修改下 clickhouse-server 的配置</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 比如把 9000 端口修改成 29000 </span>
+<span class="nb">sudo sed</span> <span class="nt">-i</span> <span class="s1">'s/&lt;tcp_port&gt;9000&lt;\/tcp_port&gt;/&lt;tcp_port&gt;29000&lt;\/tcp_port&gt;/g'</span> /etc/clickhouse-server/co
+nfig.xml
+</code></pre></div></div>
+
+<p>其次你可能也需要修改下你的密码</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 比如我们把密码修改成 10241024</span>
+<span class="nb">sudo sed</span> <span class="nt">-i</span> <span class="s1">'s/            &lt;password&gt;&lt;\/password&gt;/            &lt;password&gt;10241024&lt;\/password&gt;/g'</span> /etc/clickhouse-server/user.xml
+</code></pre></div></div>
+
+<p>下面你就可以启动 clickhouse-server</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>service clickhouse-server start
+</code></pre></div></div>
+
+<p>然后你可以使用 cli 工具连接开始你的 ck 游戏之旅</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>clcikhosue-client <span class="nt">-m</span> <span class="nt">--port</span> 29000 <span class="nt">--passowrd</span> 10241024
+</code></pre></div></div>
 
 </div>
 
@@ -43,9 +79,9 @@ var WRInitTime=(new Date()).getTime();
   <h2>Related Posts</h2>
   <ul class="posts">
     
-      <li><span>09 Feb 2022</span> &raquo; <a href="/2022/02/09/%E5%9C%A8WSL%E7%8E%AF%E5%A2%83%E4%B8%8B%E4%BD%BF%E7%94%A8Clickhouse.html">在WSL环境下使用Clickhouse</a></li>
-    
       <li><span>08 Feb 2022</span> &raquo; <a href="/2022/02/08/%E4%BD%BF%E7%94%A8WSL%E9%85%8D%E5%90%88Windows%E5%86%99GitPages%E5%8D%9A%E5%AE%A2.html">使用WSL配合Windows写GitPages博客</a></li>
+    
+      <li><span>09 Nov 2021</span> &raquo; <a href="/2021/11/09/Performance-and-scalability-in-Java.html">Performance and scalability in java concurrent programming</a></li>
     
       <li><span>28 Oct 2021</span> &raquo; <a href="/2021/10/28/Spring-Graceful-Shutdown.html">Spring Graceful Shutdown</a></li>
     

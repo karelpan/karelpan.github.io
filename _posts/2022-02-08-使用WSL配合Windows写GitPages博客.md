@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 2022-02-08-使用WSL配合Windows写GitPages博客
+title: 使用WSL配合Windows写GitPages博客
 uuid: 78bf8738-c61c-4db9-ab57-eb547d007949
 ---
 
